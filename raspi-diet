@@ -36,6 +36,9 @@ apt-get purge --auto-remove -y manpages-dev
 apt-get purge --auto-remove -y dbus-x11 libx11-6 libx11-data libx11-xcb1 x11-common x11-utils
 apt-get purge --auto-remove -y lxde-icon-theme gconf-service gconf2-common
 
+# As seen on package list
+apt-get purge --auto-remove -y xkb-data
+
 # Run autoremove
 apt-get autoremove -y
 
@@ -43,6 +46,11 @@ apt-get autoremove -y
 apt-get update -y
 apt-get upgrade -y
 apt-get dist-upgrade -y
+
+# Run deborphan
+apt-get install -y deborphan
+apt-get remove --purge $(deborphan)
+apt-get purge --auto-remove -y deborphan dialog
 
 # Cleanup
 apt-get clean -y
