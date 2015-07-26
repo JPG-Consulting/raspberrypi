@@ -47,3 +47,18 @@ make menuselect
 
 make
 make install
+
+#
+# Chan Dongle
+#
+cd /usr/src
+
+if [ $ASTERISK_VERSION -eq 10 ]; then
+    git clone -b asterisk10 https://github.com/jstasiak/asterisk-chan-dongle.git asterisk-chan-dongle
+elif [ $ASTERISK_VERSION -eq 11 ]; then
+    git clone -b asterisk11 https://github.com/jstasiak/asterisk-chan-dongle.git asterisk-chan-dongle
+elif [ $ASTERISK_VERSION -eq 12 ]; then
+    git clone https://github.com/superles/chan-dongle-asterisk12.git asterisk-chan-dongle
+else
+    echo "chan_dongle is not available for the selected Asterisk version"
+fi
