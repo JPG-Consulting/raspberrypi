@@ -56,6 +56,9 @@ make progdocs
 #
 # Official repository: 
 #    https://github.com/bg111/asterisk-chan-dongle
+
+apt-get install -y automake
+
 cd /usr/src
 
 if [ $ASTERISK_VERSION -eq 10 ]; then
@@ -67,3 +70,7 @@ elif [ $ASTERISK_VERSION -eq 12 ]; then
 else
     echo "chan_dongle is not available for the selected Asterisk version"
 fi
+
+cd /usr/src/asterisk-chan-dongle
+aclocal && autoconf && automake -a
+
