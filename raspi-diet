@@ -31,5 +31,19 @@ apt-get purge --auto-remove -y xserver-xorg xinit
 apt-get purge --auto-remove -y xserver-xorg-video-fbdev
 apt-get purge --auto-remove -y libraspberrypi-dev libraspberrypi-doc
 apt-get purge --auto-remove -y manpages-dev
+
+# Taken from other sources
 apt-get purge --auto-remove -y dbus-x11 libx11-6 libx11-data libx11-xcb1 x11-common x11-utils
 apt-get purge --auto-remove -y lxde-icon-theme gconf-service gconf2-common
+
+# Run autoremove
+apt-get autoremove -y
+
+# Upgrade
+apt-get update -y
+apt-get upgrade -y
+apt-get dist-upgrade -y
+
+# Cleanup
+apt-get clean -y
+apt-get autoclean -y
