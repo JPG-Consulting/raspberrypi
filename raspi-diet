@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Delete unused software packages, in reverse order of /var/log/apt/history.log, including automatically installed packages
+apt-get purge --auto-remove -y wolfram-engine
+apt-get purge --auto-remove -y minecraft-pi python-minecraftpi
+apt-get purge --auto-remove -y java-common oracle-java8-jdk
+apt-get purge --auto-remove -y python3-pifacecommon python3-pifacedigitalio python3-pifacedigital-scratch-handler python-pifacecommon python-pifacedigitalio
+apt-get purge --auto-remove -y pypy-upstream
+apt-get purge --auto-remove -y sonic-pi
+apt-get purge --auto-remove -y pistore
+apt-get purge --auto-remove -y smartsim penguinspuzzle
+apt-get purge --auto-remove -y timidity
+apt-get purge --auto-remove -y scratch nuscratch
+apt-get purge --auto-remove -y debian-reference-en dillo x2x
+apt-get purge --auto-remove -y python-picamera python3-picamera
+apt-get purge --auto-remove -y idle3 python3-tk python3-pygame python-pygame
+apt-get purge --auto-remove -y weston
+apt-get purge --auto-remove -y lightdm gnome-themes-standard-data gnome-icon-theme
+apt-get purge --auto-remove -y raspberrypi-artwork
+apt-get purge --auto-remove -y omxplayer
+apt-get purge --auto-remove -y wpagui
+apt-get purge --auto-remove -y gvfs-backends gvfs-fuse
+apt-get purge --auto-remove -y desktop-base lxpolkit
+apt-get purge --auto-remove -y netsurf-gtk zenity xdg-utils
+apt-get purge --auto-remove -y xpdf gtk2-engines alsa-utils
+apt-get purge --auto-remove -y xserver-xorg-video-fbturbo
+apt-get purge --auto-remove -y lxde lxtask menu-xdg gksu
+apt-get purge --auto-remove -y epiphany-browser cgroup-bin
+apt-get purge --auto-remove -y gstreamer1.0-x gstreamer1.0-omx gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-alsa gstreamer1.0-libav
+apt-get purge --auto-remove -y xserver-xorg xinit
+apt-get purge --auto-remove -y xserver-xorg-video-fbdev
+apt-get purge --auto-remove -y libraspberrypi-dev libraspberrypi-doc
+apt-get purge --auto-remove -y manpages-dev
+apt-get purge --auto-remove -y dbus-x11 libx11-6 libx11-data libx11-xcb1 x11-common x11-utils
+apt-get purge --auto-remove -y lxde-icon-theme gconf-service gconf2-common
