@@ -1,0 +1,15 @@
+#!/bin/bash
+#
+# Asterisk for raspberry
+
+ASTERISK_VERSION='11'
+
+# Required packages to build Asterisk
+apt-get install -y git-core
+
+
+cd /usr/src
+
+git clone -b ${ASTERISK_VERSION} http://gerrit.asterisk.org/asterisk asterisk-${ASTERISK_VERSION}
+
+
