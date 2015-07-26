@@ -76,3 +76,5 @@ aclocal && autoconf && automake -a
 ./configure –-with-asterisk="/usr/src/asterisk-${ASTERISK_VERSION}/include"
 make
 make install
+
+cp /usr/src/asterisk-chan-dongle/etc/dongle.conf /etc/asterisk/dongle.conf
