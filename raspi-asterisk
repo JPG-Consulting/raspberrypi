@@ -51,6 +51,8 @@ make install
 #
 # Chan Dongle
 #
+# Official repository: 
+#    https://github.com/bg111/asterisk-chan-dongle
 cd /usr/src
 
 if [ $ASTERISK_VERSION -eq 10 ]; then
