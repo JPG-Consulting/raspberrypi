@@ -1,15 +1,49 @@
 #!/bin/bash
 #
 # Asterisk for raspberry
+# Resources:
+#    http://matthewjordan.net/2013/09/02/asterisk-12-on-a-raspberry-pi/
 
 ASTERISK_VERSION='11'
 
 # Required packages to build Asterisk
 apt-get install -y git-core
 
+# Installl Asterisk Dependencies
+apt-get install -y build-essential libsqlite3-dev libxml2-dev libncurses5-dev libncursesw5-dev libiksemel-dev libssl-dev libeditline-dev libedit-dev curl libcurl4-gnutls-dev
+
+# Since this is Asterisk 12, however, I’ll want a few other things as well. 
+# The CHANGES and UPGRADE.txt file tell you the additional dependencies
+# let’s got those as well:
+apt-get install -y libjansson4 libjansson-dev libuuid1 uuid-dev libxslt1-dev liburiparser-dev liburiparser1
 
 cd /usr/src
 
 git clone -b ${ASTERISK_VERSION} http://gerrit.asterisk.org/asterisk asterisk-${ASTERISK_VERSION}
 
+if [ $ASTERISK_VERSION  -gt 11 ]; then
+    git clone https://github.com/asterisk/pjproject pjproject
+    
+    cd /usr/src/pjproject
+    
+    #  I don’t have libsrtp installed and I’m not going to use SRTP in Asterisk, so I 
+    # can ignore that. I also don’t have libspeex installed, and I don’t really care 
+    # about using libspeex in Asterisk either. The same goes for the GSM library. So, 
+    # in the end I ended up with the following
+    ./configure --prefix=/usr --enable-shared --disable-sound --disable-video --disable-resample
+    make dep
+    make
+    make install
+fi
 
+cd /usr/src/asterisk-${ASTERISK_VERSION}
+if [ $ASTERISK_VERSION  -gt 11 ]; then
+    ./configure --with-pjproject
+else
+    ./configure
+fi
+
+make menuselect
+
+make
+make install
