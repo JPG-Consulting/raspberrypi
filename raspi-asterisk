@@ -48,6 +48,9 @@ make menuselect
 make
 make install
 
+make samples
+make progdocs
+
 #
 # Chan Dongle
 #
