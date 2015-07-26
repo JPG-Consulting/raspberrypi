@@ -48,6 +48,36 @@ make menuselect
 make
 make install
 
+cp /usr/src/asterisk-${ASTERISK_VERSION}/contrib/init.d/rc.debian.asterisk /etc/init.d/asterisk
+
+sed -e 's/__ASTERISK_SBIN_DIR__/\/usr\/sbin/g' -e 's/__ASTERISK_VARRUN_DIR__/\/var\/run\/asterisk\//g' -e 's/__ASTERISK_ETC_DIR__/\/etc\/asterisk\//g' -i /etc/init.d/asterisk
+sed -e 's/\/bin\/sh/\/bin\/bash/g' -i /etc/init.d/asterisk
+sed -e 's/set -e/set -e\nsource \/etc\/profile/g' -i /etc/init.d/asterisk
+#set up websockets for webrtc
+sed -e 's/;enabled/enabled/g' -i /etc/asterisk/http.conf
+sed -e 's/;bindport/bindport/g' -i /etc/asterisk/http.conf
+sed -e 's/;\Wicesupport/icesupport/g' -i /etc/asterisk/rtp.conf
+sed -e 's/;\Wstunaddr=/stunaddr=stun.l.google.com:19302/g' -i /etc/asterisk/rtp.conf
+ed -e 's/transport=udp/transport=udp,ws/g' -i /etc/asterisk/sip.conf
+#prep asterisk for multiple users
+touch /etc/asterisk/userconf_extensions.conf
+echo "#include /etc/asterisk/userconf_extensions.conf" >> /etc/asterisk/extensions.conf
+touch /etc/asterisk/userconf_sip.conf
+echo "#include /etc/asterisk/userconf_sip.conf" >> /etc/asterisk/sip.conf
+touch /etc/asterisk/userconf_iax.conf
+echo "#include /etc/asterisk/userconf_iax.conf" >> /etc/asterisk/iax.conf
+touch /etc/asterisk/userconf_voicemail.conf
+echo "#include /etc/asterisk/userconf_voicemail.conf" >> /etc/asterisk/voicemail.conf
+touch /etc/asterisk/userconf_musiconhold.conf
+echo "#include /etc/asterisk/userconf_musiconhold.conf" >> /etc/asterisk/musiconhold.conf
+sed -e 's/;\[files\]/\[files\]/g' -i /etc/asterisk/asterisk.conf
+sed -e 's/;astctlpermissions = 0660/astctlpermissions = 0770/g' -i /etc/asterisk/asterisk.conf 
+sed -e 's/;astctlgroup = apache/astctlgroup = asterisk/g' -i /etc/asterisk/asterisk.conf
+sed -e 's/;verbose/verbose/g' -i /etc/asterisk/asterisk.conf
+
+update-rc.d asterisk defaults
+service asterisk start
+
 make samples
 make progdocs
 
