@@ -116,8 +116,23 @@ chown -R asterisk. /var/www/
 sed -i 's/\(^upload_max_filesize = \).*/\1120M/' /etc/php5/apache2/php.ini
 cp /etc/apache2/apache2.conf /etc/apache2/apache2.conf_orig
 sed -i 's/^\(User\|Group\).*/\1 asterisk/' /etc/apache2/apache2.conf
+sed -i 's/AllowOverride None/AllowOverride All/' /etc/apache2/sites-available/default
 /etc/init.d/apache2 restart
+
+cd /usr/src/freepbx-framework
 ./install_amp --installdb
+./install_amp --update-links
+amportal chown
+amportal a ma installall
+amportal a ma download manager
+amportal a ma install manager
+amportal a ma installall
+amportal chown
+amportal a ma refreshsignatures
+amportal a reload
+ln -s /var/lib/asterisk/moh /var/lib/asterisk/mohmp3
+amportal restart
+
 
 rm /var/www/index.html
 
