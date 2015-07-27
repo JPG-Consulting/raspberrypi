@@ -99,6 +99,8 @@ apt-get install -y mysql-client
 apt-get install -y apache2
 apt-get install -y php5 libapache2-mod-php5 php-pear php-db php5-mysql 
 
+mysql -uroot -praspberry -e "CREATE DATABASE asterisk;"
+
 cd /usr/src
 git clone http://git.freepbx.org/scm/freepbx/framework.git freepbx-framework
 cd /usr/src/freepbx-framework
