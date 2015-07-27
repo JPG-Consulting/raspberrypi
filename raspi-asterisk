@@ -4,6 +4,7 @@
 # Resources:
 #    http://matthewjordan.net/2013/09/02/asterisk-12-on-a-raspberry-pi/
 #    http://community.freepbx.org/t/debian-wheezy-freepbx-12-asterisk-13-1-0-how-to-mostly-working-with-warnings/26845
+#    https://github.com/stgnet/bin/blob/4fe871dc299388e9836ef8a6df8255f110e2e857/install-fpbx#L97
 
 ASTERISK_VERSION='11'
 FREEPBX_VERSION='12.0'
@@ -135,17 +136,6 @@ LOCAL_IP_ADDRESS=$( ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | gre
 ./install_amp --installdb --username=${ASTERISK_DB_USER} --password=${ASTERISK_DB_PW} --dbhost='127.0.0.1' --dbname='asterisk' --freepbxip='${LOCAL_IP_ADDRESS}' --cgibin='/var/www/cgi-bin' --bin='/var/lib/asterisk/bin' --sbin='/usr/local/sbin' --asteriskuser=admin --asteriskpass=admin --asteriskip='127.0.0.1' --scripted
 ./install_amp --installdb
 ./install_amp --update-links
-amportal chown
-amportal a ma installall
-amportal a ma download manager
-amportal a ma install manager
-amportal a ma installall
-amportal a ma download sipsettings
-amportal a ma install sipsettings
-amportal a ma installall
-amportal chown
-amportal a ma refreshsignatures
-amportal a reload
 
 # Minimal module install
 amportal a ma upgrade framework
