@@ -7,6 +7,7 @@
 
 ASTERISK_VERSION='11'
 FREEPBX_VERSION='12.0'
+MYSQL_ROOT_PASSWD="raspberry"
 
 if [ ! -f /etc/network/interfaces ]; then
     echo "auto lo" > /etc/network/interfaces
@@ -94,6 +95,8 @@ make samples
 make progdocs
 
 # FreePBX
+debconf-set-selections <<< "mysql-server mysql-server/root_password password $(MYSQL_ROOT_PASSWD)"
+debconf-set-selections <<< "mysql-server mysql-server/root_password_again password $(MYSQL_ROOT_PASSWD)"
 apt-get install -y --fix-missing mysql-server
 # if it fails... in my case it fails....
 
@@ -101,7 +104,7 @@ apt-get install -y mysql-client
 apt-get install -y apache2
 apt-get install -y php5 libapache2-mod-php5 php-pear php-db php5-mysql 
 
-mysql -uroot -praspberry -e "CREATE DATABASE asterisk;"
+mysql -uroot -p$(MYSQL_ROOT_PASSWD) -e "CREATE DATABASE asterisk;"
 
 cd /usr/src
 git clone http://git.freepbx.org/scm/freepbx/framework.git freepbx-framework
