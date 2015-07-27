@@ -1,0 +1,117 @@
+#!/bin/bash
+#
+# Asterisk for raspberry
+# Resources:
+#    http://matthewjordan.net/2013/09/02/asterisk-12-on-a-raspberry-pi/
+#    http://community.freepbx.org/t/debian-wheezy-freepbx-12-asterisk-13-1-0-how-to-mostly-working-with-warnings/26845
+#    https://github.com/stgnet/bin/blob/4fe871dc299388e9836ef8a6df8255f110e2e857/install-fpbx#L97
+
+ASTERISK_VERSION='11'
+ASTERISK_USER="asterisk"
+INSTALL_CHAN_DONGLE=1
+
+if [ ! -f /etc/network/interfaces ]; then
+    echo "auto lo" > /etc/network/interfaces
+    echo "iface lo inet loopback" >> /etc/network/interfaces
+    echo "" >> /etc/network/interfaces
+    echo "auto eth0" >> /etc/network/interfaces
+    echo "iface eth0 inet dhcp" >> /etc/network/interfaces
+    
+    ifconfig lo 127.0.0.1 netmask 255.0.0.0 up
+fi
+
+#--------------------------------------------------#
+#                    Asterisk                      #
+#--------------------------------------------------#
+# Required packages to build Asterisk
+echo "Installing pre-requisites..."
+apt-get install -y -qq git-core build-essential libsqlite3-dev libxml2-dev libncurses5-dev libncursesw5-dev libiksemel-dev libssl-dev libeditline-dev libedit-dev curl libcurl4-gnutls-dev
+
+# Since this is Asterisk 12, however, I’ll want a few other things as well. 
+# The CHANGES and UPGRADE.txt file tell you the additional dependencies
+# let’s got those as well:
+if [ ${ASTERISK_VERSION} -gt 11 ]; then
+    apt-get install -y -qq libjansson4 libjansson-dev libuuid1 uuid-dev libxslt1-dev liburiparser-dev liburiparser1
+fi
+
+cd /usr/src
+git clone -b ${ASTERISK_VERSION} http://gerrit.asterisk.org/asterisk asterisk-${ASTERISK_VERSION}
+
+if [ $ASTERISK_VERSION  -gt 11 ]; then
+    cd /usr/src
+    git clone https://github.com/asterisk/pjproject pjproject
+    
+    cd /usr/src/pjproject
+    
+    #  I don’t have libsrtp installed and I’m not going to use SRTP in Asterisk, so I 
+    # can ignore that. I also don’t have libspeex installed, and I don’t really care 
+    # about using libspeex in Asterisk either. The same goes for the GSM library. So, 
+    # in the end I ended up with the following
+    ./configure --prefix=/usr --enable-shared --disable-sound --disable-video --disable-resample
+    make dep
+    make
+    make install
+fi
+
+cd /usr/src/asterisk-${ASTERISK_VERSION}
+if [ $ASTERISK_VERSION  -gt 11 ]; then
+    ./configure --with-pjproject
+else
+    ./configure
+fi
+
+make menuselect
+make
+make install
+make samples
+make progdocs
+
+# Copy startup files
+cp /usr/src/asterisk-${ASTERISK_VERSION}/contrib/init.d/rc.debian.asterisk /etc/init.d/asterisk
+cp /usr/src/asterisk-${ASTERISK_VERSION}/contrib/init.d/etc_default_asterisk /etc/default/asterisk
+
+sed -e 's/#AST_USER/AST_USER/g' -e 's/#AST_GROUP/AST_GROUP/g' -i /etc/default/asterisk
+sed -e 's/__ASTERISK_SBIN_DIR__/\/usr\/sbin/g' -e 's/__ASTERISK_VARRUN_DIR__/\/var\/run\/asterisk\//g' -e 's/__ASTERISK_ETC_DIR__/\/etc\/asterisk\//g' -i /etc/init.d/asterisk
+sed -e 's/\/bin\/sh/\/bin\/bash/g' -i /etc/init.d/asterisk
+
+adduser ${ASTERISK_USER} --disabled-password --gecos "Asterisk User"
+chown ${ASTERISK_USER}. /var/run/asterisk
+chown -R ${ASTERISK_USER}. /etc/asterisk
+chown -R ${ASTERISK_USER}. /var/{lib,log,spool}/asterisk
+chown -R ${ASTERISK_USER}. /usr/lib/asterisk
+
+update-rc.d asterisk defaults
+service asterisk restart
+
+#--------------------------------------------------#
+#               Asterisk chan_dongle               #
+#--------------------------------------------------#
+if [ ${INSTALL_CHAN_DONGLE} -ne 0 ]; then
+    apt-get install -y automake
+
+    cd /usr/src
+
+    if [ $ASTERISK_VERSION -eq 10 ]; then
+        git clone -b asterisk10 https://github.com/jstasiak/asterisk-chan-dongle.git asterisk-chan-dongle
+    elif [ $ASTERISK_VERSION -eq 11 ]; then
+        git clone -b asterisk11 https://github.com/jstasiak/asterisk-chan-dongle.git asterisk-chan-dongle
+    elif [ $ASTERISK_VERSION -eq 12 ]; then
+        git clone https://github.com/superles/chan-dongle-asterisk12.git asterisk-chan-dongle
+    else
+        echo "Error: chan_dongle is not available for the selected Asterisk version"
+        INSTALL_CHAN_DONGLE=0
+    fi
+
+    if [ ${INSTALL_CHAN_DONGLE} -ne 0 ]; then
+        cd /usr/src/asterisk-chan-dongle
+        aclocal && autoconf && automake -a
+        ./configure –-with-asterisk="/usr/src/asterisk-${ASTERISK_VERSION}/include"
+        make
+        make install
+
+        cp /usr/src/asterisk-chan-dongle/etc/dongle.conf /etc/asterisk/dongle.conf
+        echo "KERNEL==\"ttyUSB*\", MODE=\"0666\", OWNER=\"${ASTERISK_USER}\", GROUP=\"uucp\"" > /etc/udev/rules.d/92-dongle.rules
+
+        service asterisk restart
+    fi
+fi
