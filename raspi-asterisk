@@ -160,7 +160,7 @@ if [ ${INSTALL_FREEPBX} -ne 0 ]; then
     
     rm /var/www/index.html
     
-    sed -e 's/^\(User\|Group\).*/\1 asterisk/' -i /etc/apache2/apache2.conf
+    sed -e "s/^\(User\|Group\).*/\1 ${ASTERISK_USER}/" -i /etc/apache2/apache2.conf
     sed -e 's/AllowOverride None/AllowOverride All/' -i /etc/apache2/sites-available/default
     
     service apache2 restart
