@@ -167,7 +167,7 @@ if [ ${INSTALL_FREEPBX} -ne 0 ]; then
     service apache2 restart
     
     # Install PHP
-    apt-get install -y -qq php5 libapache2-mod-php5 php-db php5-mysql
+    apt-get install -y -qq php5 libapache2-mod-php5 php-db php5-mysql php5-curl
     
     sed -i 's/\(^upload_max_filesize = \).*/\1120M/' /etc/php5/apache2/php.ini
     
