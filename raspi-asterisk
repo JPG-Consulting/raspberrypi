@@ -106,7 +106,19 @@ if [ ${INSTALL_CHAN_DONGLE} -ne 0 ]; then
         cd /usr/src/asterisk-chan-dongle
         aclocal && autoconf && automake -a
         ./configure –-with-asterisk="/usr/src/asterisk-${ASTERISK_VERSION}/include"
+        if [ $? -ne 0 ]; then
+             CFLAGS="-I /usr/src/asterisk-${ASTERISK_VERSION}/include" ./configure
+             if [ $? -ne 0 ]; then
+                echo "Error: Unable to configure chan_dongle."
+                exit 1
+             fi
+        fi
+        
         make
+        if [ $? -ne 0 ]; then
+            echo "Error: Failed to build chan_dongle."
+            exit 1
+        fi
         make install
 
         cp /usr/src/asterisk-chan-dongle/etc/dongle.conf /etc/asterisk/dongle.conf
