@@ -87,7 +87,7 @@ service asterisk restart
 #               Asterisk chan_dongle               #
 #--------------------------------------------------#
 if [ ${INSTALL_CHAN_DONGLE} -ne 0 ]; then
-    apt-get install -y automake
+    apt-get install -y -qq automake
 
     cd /usr/src
 
