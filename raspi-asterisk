@@ -180,6 +180,6 @@ if [ ${INSTALL_FREEPBX} -ne 0 ]; then
     cd /usr/src/freepbx-framework
     git checkout release/${FREEPBX_VERSION}
     
-    ./install_amp --installdb --username=${ASTERISK_DB_USER} --password=${ASTERISK_DB_PW} --dbhost='127.0.0.1' --dbname='asterisk' --cgibin='/var/www/cgi-bin' --bin='/var/lib/asterisk/bin' --sbin='/usr/local/sbin' --asteriskuser=admin --asteriskpass=admin --asteriskip='127.0.0.1' --scripted --cleaninstall
+    ./install_amp --installdb --username=${ASTERISK_DB_USER} --password=${ASTERISK_DB_PW} --dbhost='127.0.0.1' --dbname='asterisk' --webroot '/var/www' --cgibin='/var/www/cgi-bin' --bin='/var/lib/asterisk/bin' --sbin='/usr/local/sbin' --asteriskuser=admin --asteriskpass=admin --asteriskip='127.0.0.1' --scripted --force-overwrite --cleaninstall
     
 fi
