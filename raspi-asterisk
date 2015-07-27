@@ -164,4 +164,14 @@ if [ ${INSTALL_FREEPBX} -ne 0 ]; then
     sed -e 's/AllowOverride None/AllowOverride All/' -i /etc/apache2/sites-available/default
     
     service apache2 restart
+    
+    # Install PHP
+    apt-get install -y -qq php5 libapache2-mod-php5 php-db php5-mysql
+    
+    sed -i 's/\(^upload_max_filesize = \).*/\1120M/' /etc/php5/apache2/php.ini
+    
+    # Patch PHP deprecated messages
+    find /etc/php5/cli/conf.d/ -name "*.ini" -exec sed -i -re 's/^(\s*)#(.*)/\1;\2/g' {} \;
+    
+    
 fi
