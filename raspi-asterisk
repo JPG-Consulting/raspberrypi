@@ -175,12 +175,12 @@ if [ ${INSTALL_FREEPBX} -ne 0 ]; then
     find /etc/php5/cli/conf.d/ -name "*.ini" -exec sed -i -re 's/^(\s*)#(.*)/\1;\2/g' {} \;
     
     # Install FreePBX
-    cd /usr/src
-    git clone http://git.freepbx.org/scm/freepbx/framework.git freepbx-framework
-    cd /usr/src/freepbx-framework
+    cd /usr/share
+    git clone http://git.freepbx.org/scm/freepbx/framework.git freepbx
+    cd /usr/share/freepbx
     git checkout release/${FREEPBX_VERSION}
     
-    ./install_amp --installdb --username=${ASTERISK_DB_USER} --password=${ASTERISK_DB_PW} --dbhost='127.0.0.1' --dbname='asterisk' --webroot '/var/www' --cgibin='/var/www/cgi-bin' --bin='/var/lib/asterisk/bin' --sbin='/usr/local/sbin' --asteriskuser=admin --asteriskpass=admin --asteriskip='127.0.0.1' --scripted --force-overwrite --cleaninstall
+    ./install_amp --installdb --username=${ASTERISK_DB_USER} --password=${ASTERISK_DB_PW} --dbhost='127.0.0.1' --dbname='asterisk' --webroot='/var/www' --cgibin='/var/www/cgi-bin' --bin='/var/lib/asterisk/bin' --sbin='/usr/local/sbin' --asteriskuser=admin --asteriskpass=admin --asteriskip='127.0.0.1' --uid asterisk --gid asterisk --scripted --force-overwrite --cleaninstall
     ./install_amp --update-links
 
     # Minimal module install
