@@ -49,7 +49,7 @@ apt-get dist-upgrade -y
 
 # Run deborphan
 apt-get install -y deborphan
-apt-get remove --purge $(deborphan)
+apt-get remove --purge -y $(deborphan)
 apt-get purge --auto-remove -y deborphan dialog
 
 # Cleanup
