@@ -140,9 +140,25 @@ amportal a ma installall
 amportal a ma download manager
 amportal a ma install manager
 amportal a ma installall
+amportal a ma download sipsettings
+amportal a ma install sipsettings
+amportal a ma installall
 amportal chown
 amportal a ma refreshsignatures
 amportal a reload
+
+# Minimal module install
+amportal a ma upgrade framework
+amportal a ma upgrade core
+amportal a ma upgrade voicemail
+amportal a ma upgrade sipsettings
+amportal a ma upgrade infoservices
+amportal a ma upgrade featurecodeadmin
+amportal a ma upgrade logfiles
+amportal a ma upgrade callrecording
+amportal a ma upgrade cdr
+amportal a ma upgrade dashboard
+
 ln -s /var/lib/asterisk/moh /var/lib/asterisk/mohmp3
 amportal restart
 
