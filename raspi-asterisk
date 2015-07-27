@@ -135,9 +135,7 @@ sed -i 's/AllowOverride None/AllowOverride All/' /etc/apache2/sites-available/de
 /etc/init.d/apache2 restart
 
 cd /usr/src/freepbx-framework
-LOCAL_IP_ADDRESS=$( ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' )
-./install_amp --installdb --username=${ASTERISK_DB_USER} --password=${ASTERISK_DB_PW} --dbhost='127.0.0.1' --dbname='asterisk' --freepbxip='${LOCAL_IP_ADDRESS}' --cgibin='/var/www/cgi-bin' --bin='/var/lib/asterisk/bin' --sbin='/usr/local/sbin' --asteriskuser=admin --asteriskpass=admin --asteriskip='127.0.0.1' --scripted
-./install_amp --installdb
+./install_amp --installdb --username=${ASTERISK_DB_USER} --password=${ASTERISK_DB_PW} --dbhost='127.0.0.1' --dbname='asterisk' --cgibin='/var/www/cgi-bin' --bin='/var/lib/asterisk/bin' --sbin='/usr/local/sbin' --asteriskuser=admin --asteriskpass=admin --asteriskip='127.0.0.1' --scripted --cleaninstall
 ./install_amp --update-links
 
 # Minimal module install
