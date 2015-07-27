@@ -107,6 +107,8 @@ cd /usr/src/freepbx-framework
 git checkout release/12.0
 ./install_amp --installdb
 
+rm /var/www/index.html
+
 #
 # Chan Dongle
 #
