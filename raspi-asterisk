@@ -146,9 +146,9 @@ if [ ${INSTALL_FREEPBX} -ne 0 ]; then
     apt-get install -y -qq --fix-missing mysql-server
     apt-get install -y -qq mysql-client
     
-    mysql -uroot -p$(MYSQL_ROOT_PASSWD) -e "CREATE DATABASE asterisk;"
-    mysql -uroot -p$(MYSQL_ROOT_PASSWD) -e "CREATE DATABASE asteriskcdrdb;"
-    mysql -uroot -p$(MYSQL_ROOT_PASSWD) -e "GRANT ALL PRIVILEGES ON asterisk.* TO ${ASTERISK_DB_USER}@localhost IDENTIFIED BY '${ASTERISK_DB_PW}';"
-    mysql -uroot -p$(MYSQL_ROOT_PASSWD) -e "GRANT ALL PRIVILEGES ON asteriskcdrdb.* TO ${ASTERISK_DB_USER}@localhost IDENTIFIED BY '${ASTERISK_DB_PW}';"
-    mysql -uroot -p$(MYSQL_ROOT_PASSWD) -e "flush privileges;"
+    mysql -uroot -p${MYSQL_ROOT_PASSWD} -e "CREATE DATABASE asterisk;"
+    mysql -uroot -p${MYSQL_ROOT_PASSWD} -e "CREATE DATABASE asteriskcdrdb;"
+    mysql -uroot -p${MYSQL_ROOT_PASSWD} -e "GRANT ALL PRIVILEGES ON asterisk.* TO ${ASTERISK_DB_USER}@localhost IDENTIFIED BY '${ASTERISK_DB_PW}';"
+    mysql -uroot -p${MYSQL_ROOT_PASSWD} -e "GRANT ALL PRIVILEGES ON asteriskcdrdb.* TO ${ASTERISK_DB_USER}@localhost IDENTIFIED BY '${ASTERISK_DB_PW}';"
+    mysql -uroot -p${MYSQL_ROOT_PASSWD} -e "flush privileges;"
 fi
