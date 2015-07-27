@@ -82,7 +82,10 @@ make samples
 make progdocs
 
 # FreePBX
-apt-get install -y mysql-server mysql-client
+apt-get install -y --fix-missing mysql-server
+# if it fails... in my case it fails....
+
+apt-get install -y mysql-client
 apt-get install -y apache2
 apt-get install -y php5 libapache2-mod-php5 php-pear php-db php5-mysql 
 
