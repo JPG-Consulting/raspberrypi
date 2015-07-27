@@ -12,6 +12,8 @@ if [ ! -f /etc/network/interfaces ]; then
     echo "" >> /etc/network/interfaces
     echo "auto eth0" >> /etc/network/interfaces
     echo "iface eth0 inet dhcp" >> /etc/network/interfaces
+    
+    ifconfig lo 127.0.0.1 netmask 255.0.0.0 up
 fi
 
 # Required packages to build Asterisk
