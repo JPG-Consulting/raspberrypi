@@ -152,8 +152,14 @@ amportal a ma upgrade callrecording
 amportal a ma upgrade cdr
 amportal a ma upgrade dashboard
 
-ln -s /var/lib/asterisk/moh /var/lib/asterisk/mohmp3
+# Optionally install all standard modules
+amportal a ma upgrade manager
+amportal a ma installall
 amportal restart
+amportal a reload
+amportal chown
+
+ln -s /var/lib/asterisk/moh /var/lib/asterisk/mohmp3
 
 
 rm /var/www/index.html
