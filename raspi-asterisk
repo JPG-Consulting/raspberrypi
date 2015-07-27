@@ -69,9 +69,8 @@ fi
 make menuselect
 make
 make install
+make config
 ldconfig
-make samples
-make progdocs
 
 # Copy startup files
 cp /usr/src/asterisk-${ASTERISK_VERSION}/contrib/init.d/rc.debian.asterisk /etc/init.d/asterisk
