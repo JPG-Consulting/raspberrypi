@@ -157,9 +157,6 @@ amportal restart
 amportal a reload
 amportal chown
 
-ln -s /var/lib/asterisk/moh /var/lib/asterisk/mohmp3
-
-
 rm /var/www/index.html
 
 #
