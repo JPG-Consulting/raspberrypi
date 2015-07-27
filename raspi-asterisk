@@ -3,8 +3,10 @@
 # Asterisk for raspberry
 # Resources:
 #    http://matthewjordan.net/2013/09/02/asterisk-12-on-a-raspberry-pi/
+#    http://community.freepbx.org/t/debian-wheezy-freepbx-12-asterisk-13-1-0-how-to-mostly-working-with-warnings/26845
 
 ASTERISK_VERSION='11'
+FREEPBX_VERSION='12.0'
 
 if [ ! -f /etc/network/interfaces ]; then
     echo "auto lo" > /etc/network/interfaces
@@ -104,7 +106,17 @@ mysql -uroot -praspberry -e "CREATE DATABASE asterisk;"
 cd /usr/src
 git clone http://git.freepbx.org/scm/freepbx/framework.git freepbx-framework
 cd /usr/src/freepbx-framework
-git checkout release/12.0
+git checkout release/${FREEPBX_VERSION}
+adduser asterisk --disabled-password --gecos "Asterisk User"
+chown asterisk. /var/run/asterisk
+chown -R asterisk. /etc/asterisk
+chown -R asterisk. /var/{lib,log,spool}/asterisk
+chown -R asterisk. /usr/lib/asterisk
+chown -R asterisk. /var/www/
+sed -i 's/\(^upload_max_filesize = \).*/\1120M/' /etc/php5/apache2/php.ini
+cp /etc/apache2/apache2.conf /etc/apache2/apache2.conf_orig
+sed -i 's/^\(User\|Group\).*/\1 asterisk/' /etc/apache2/apache2.conf
+/etc/init.d/apache2 restart
 ./install_amp --installdb
 
 rm /var/www/index.html
