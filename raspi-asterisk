@@ -124,6 +124,9 @@ if [ ${INSTALL_CHAN_DONGLE} -ne 0 ]; then
         cp /usr/src/asterisk-chan-dongle/etc/dongle.conf /etc/asterisk/dongle.conf
         echo "KERNEL==\"ttyUSB*\", MODE=\"0666\", OWNER=\"${ASTERISK_USER}\", GROUP=\"uucp\"" > /etc/udev/rules.d/92-dongle.rules
 
+        chown ${ASTERISK_USER}:uucp /dev/ttyUSB*
+        chmod 0666 /dev/ttyUSB*
+        
         service asterisk restart
     fi
 fi
