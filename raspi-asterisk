@@ -9,6 +9,11 @@
 ASTERISK_VERSION='11'
 ASTERISK_USER="asterisk"
 INSTALL_CHAN_DONGLE=1
+INSTALL_FREEPBX=1
+# FreePBX Variables
+MYSQL_ROOT_PASSWD="raspberry"
+ASTERISK_DB_USER="asterisk"
+ASTERISK_DB_PW="raspberry"
 
 if [ ! -f /etc/network/interfaces ]; then
     echo "auto lo" > /etc/network/interfaces
@@ -129,4 +134,21 @@ if [ ${INSTALL_CHAN_DONGLE} -ne 0 ]; then
         
         service asterisk restart
     fi
+fi
+
+#--------------------------------------------------#
+#                     FreePBX                      #
+#--------------------------------------------------#
+if [ ${INSTALL_FREEPBX} -ne 0 ]; then
+    # Install MySQL
+    debconf-set-selections <<< "mysql-server mysql-server/root_password password $(MYSQL_ROOT_PASSWD)"
+    debconf-set-selections <<< "mysql-server mysql-server/root_password_again password $(MYSQL_ROOT_PASSWD)"
+    apt-get install -y -qq --fix-missing mysql-server
+    apt-get install -y -qq mysql-client
+    
+    mysql -uroot -p$(MYSQL_ROOT_PASSWD) -e "CREATE DATABASE asterisk;"
+    mysql -uroot -p$(MYSQL_ROOT_PASSWD) -e "CREATE DATABASE asteriskcdrdb;"
+    mysql -uroot -p$(MYSQL_ROOT_PASSWD) -e "GRANT ALL PRIVILEGES ON asterisk.* TO ${ASTERISK_DB_USER}@localhost IDENTIFIED BY '${ASTERISK_DB_PW}';"
+    mysql -uroot -p$(MYSQL_ROOT_PASSWD) -e "GRANT ALL PRIVILEGES ON asteriskcdrdb.* TO ${ASTERISK_DB_USER}@localhost IDENTIFIED BY '${ASTERISK_DB_PW}';"
+    mysql -uroot -p$(MYSQL_ROOT_PASSWD) -e "flush privileges;"
 fi
