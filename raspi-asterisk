@@ -181,5 +181,25 @@ if [ ${INSTALL_FREEPBX} -ne 0 ]; then
     git checkout release/${FREEPBX_VERSION}
     
     ./install_amp --installdb --username=${ASTERISK_DB_USER} --password=${ASTERISK_DB_PW} --dbhost='127.0.0.1' --dbname='asterisk' --webroot '/var/www' --cgibin='/var/www/cgi-bin' --bin='/var/lib/asterisk/bin' --sbin='/usr/local/sbin' --asteriskuser=admin --asteriskpass=admin --asteriskip='127.0.0.1' --scripted --force-overwrite --cleaninstall
-    
+    ./install_amp --update-links
+
+    # Minimal module install
+    amportal a ma upgrade framework
+    amportal a ma upgrade core
+    amportal a ma upgrade voicemail
+    amportal a ma upgrade sipsettings
+    amportal a ma upgrade infoservices
+    amportal a ma upgrade featurecodeadmin
+    amportal a ma upgrade logfiles
+    amportal a ma upgrade callrecording
+    amportal a ma upgrade cdr
+    amportal a ma upgrade dashboard
+
+    # Optionally install all standard modules
+    amportal a ma upgrade manager
+    amportal a ma installall
+    amportal restart
+    amportal a reload
+    amportal chown
+
 fi
