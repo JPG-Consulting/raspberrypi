@@ -176,3 +176,6 @@ make
 make install
 
 cp /usr/src/asterisk-chan-dongle/etc/dongle.conf /etc/asterisk/dongle.conf
+echo "KERNEL==\"ttyUSB*\", MODE=\"0666\", OWNER=\"asterisk\", GROUP=\"uucp\"" > /etc/udev/rules.d/92-dongle.rules
+
+service asterisk restart
