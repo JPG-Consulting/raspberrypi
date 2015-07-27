@@ -69,6 +69,7 @@ fi
 make menuselect
 make
 make install
+ldconfig
 make samples
 make progdocs
 
