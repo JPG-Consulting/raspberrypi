@@ -151,4 +151,17 @@ if [ ${INSTALL_FREEPBX} -ne 0 ]; then
     mysql -uroot -p${MYSQL_ROOT_PASSWD} -e "GRANT ALL PRIVILEGES ON asterisk.* TO ${ASTERISK_DB_USER}@localhost IDENTIFIED BY '${ASTERISK_DB_PW}';"
     mysql -uroot -p${MYSQL_ROOT_PASSWD} -e "GRANT ALL PRIVILEGES ON asteriskcdrdb.* TO ${ASTERISK_DB_USER}@localhost IDENTIFIED BY '${ASTERISK_DB_PW}';"
     mysql -uroot -p${MYSQL_ROOT_PASSWD} -e "flush privileges;"
+    
+    # Install Apache
+    echo "Installing Apache 2..."
+    apt-get install -y -qq apache2
+    
+    chown -R asterisk. /var/www/
+    
+    rm /var/www/index.html
+    
+    sed -e 's/^\(User\|Group\).*/\1 asterisk/' -i /etc/apache2/apache2.conf
+    sed -e 's/AllowOverride None/AllowOverride All/' -i /etc/apache2/sites-available/default
+    
+    service apache2 restart
 fi
