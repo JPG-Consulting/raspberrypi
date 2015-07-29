@@ -24,7 +24,7 @@ function create_image()
     
     # Get sizes in MB
     local bootfs_size_mb=`df -B MB | grep '/dev/mmcblk0p1' | awk '{print $2}' | awk -F "MB" '{print $1}'`
-    if [ -z ${rootfs_size_mb} ]; then
+    if [ -z ${bootfs_size_mb} ]; then
         echo "Unable to get boot filesystem size."
         exit 1
     fi
