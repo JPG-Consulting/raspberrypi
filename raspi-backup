@@ -197,6 +197,29 @@ function create_image()
     delete_lo
 }
 
+function do_backup()
+{
+    if [ ! -f $IMAGE_FILE ]; then
+        echo "Image file $IMAGE_FILE does not exist."
+        exit 1
+    fi
+    
+    setup_lo
+    mount_image
+    
+    sync
+    rsync -aDH --partial --numeric-ids --delete --force --exclude '/dev' --exclude '/media' --exclude '/mnt' --exclude '/proc' --exclude '/run' --exclude '/sys' --exclude '/tmp' --exclude 'lost\+found' --exclude '/etc/udev/rules.d/70-persistent-net.rules' --exclude '${MOUNT_PATH}' --exclude '${IMAGE_FILE}' / ${MOUNT_PATH}/
+    if [ $? -ne 0 ]; then
+        echo "Error running backup"
+        unmount_image
+        delete_lo
+        exit 1
+    fi
+    
+    unmount_image
+    delete_lo
+}
+
 create_image
-        
+do_backup
 echo "Done."
