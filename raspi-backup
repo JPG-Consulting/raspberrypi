@@ -2,30 +2,60 @@
 BACKUP_PATH='/root'
 IMAGE_FREESPACE=64
 
-ROOTFS_SIZE=`df -B MB | grep 'rootfs' | awk '{print $3}' | awk -F "MB" '{print $1}'`
-if [ -z ${ROOTFS_SIZE} ]; then
-    echo "Unable to get root filesystem size."
-    exit 1
-fi
+function create_image()
+{
+    local bootfs_start=$(parted /dev/mmcblk0 -ms unit s p | grep "^1" | cut -f 2 -d:)
+    if [ -z ${bootfs_start} ]; then
+        echo "Unable to get boot partition start offset."
+        exit 1
+    fi
+    
+    local bootfs_size=$(parted /dev/mmcblk0 -ms unit s p | grep "^1" | cut -f 4 -d:)
+    if [ -z ${bootfs_size} ]; then
+        echo "Unable to get boot filesystem size."
+        exit 1
+    fi
+    
+    local rootfs_start=$(parted /dev/mmcblk0 -ms unit s p | grep "^2" | cut -f 2 -d:)
+    if [ -z ${rootfs_size_mb} ]; then
+        echo "Unable to get root filesystem start offset."
+        exit 1
+    fi
+    
+    # Get sizes in MB
+    local bootfs_size_mb=`df -B MB | grep '/dev/mmcblk0p1' | awk '{print $2}' | awk -F "MB" '{print $1}'`
+    if [ -z ${rootfs_size_mb} ]; then
+        echo "Unable to get boot filesystem size."
+        exit 1
+    fi
+    
+    local rootfs_size_mb==`df -B MB | grep 'rootfs' | awk '{print $2}' | awk -F "MB" '{print $1}'`
+    if [ -z ${rootfs_size_mb} ]; then
+        echo "Unable to get root filesystem size."
+        exit 1
+    fi
 
-BOOTFS_SIZE=`df -B MB | grep '/dev/mmcblk0p1' | awk '{print $2}' | awk -F "MB" '{print $1}'`
-if [ -z ${BOOTFS_SIZE} ]; then
-    echo "Unable to get boot filesystem size."
-    exit 1
-fi
+    if ! [[ ${IMAGE_FREESPACE} =~ '^[0-9]+$' ]] ; then
+        echo "Freespace must be a positive numeric value" 
+        exit 1
+    fi
 
-if [ $IMAGE_FREESPACE -lt 8 ]; then
-    $IMAGE_FREESPACE=8
-fi
+    if [ $IMAGE_FREESPACE -lt 8 ]; then
+        echo "Freespace has been set to 8Mb"
+        $IMAGE_FREESPACE=8
+    fi
+    
+    local image_size=$(expr ${bootfs_size_mb} + ${rootfs_size_mb} + ${IMAGE_FREESPACE} )    
+    
+    echo "Creating image file..."
+    IMAGE_FILE="${BACKUP_PATH}/rpi_backup.img"
+    dd if=/dev/zero of=${IMAGE_FILE} bs=1M count=${image_size}
 
-IMAGE_SIZE=$(expr ${ROOTFS_SIZE} + ${BOOTFS_SIZE} + ${IMAGE_FREESPACE} )
+    parted ${IMAGE_FILE} --script -- mklabel msdos
+    parted ${IMAGE_FILE} --script -- mkpart primary fat32 ${bootfs_start} ${bootsf_size}
+    parted ${IMAGE_FILE} --script -- mkpart primary ext4 ${rootfs_start} -1
+}
 
-echo "Creating image file..."
-IMAGE_FILE="${BACKUP_PATH}/rpi_backup.img"
-dd if=/dev/zero of=${IMAGE_FILE} bs=1M count=${IMAGE_SIZE}
-
-parted ${IMAGE_FILE} --script -- mklabel msdos
-parted ${IMAGE_FILE} --script -- mkpart primary fat32 0 64
-parted ${IMAGE_FILE} --script -- mkpart primary ext4 64 -1
+create_image
         
 echo "Done."
