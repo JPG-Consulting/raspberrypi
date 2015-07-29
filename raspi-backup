@@ -1,5 +1,5 @@
 #!/bin/bash
-BACKUP_PATH='/root'
+BACKUP_PATH=$(pwd)
 IMAGE_FREESPACE=64
 DISTRIB_ID='raspbian'
 DISTRIB_CODENAME='wheezy'
@@ -271,6 +271,11 @@ function do_backup()
     unmount_image
     delete_lo
 }
+
+read -p "Backup path: [${BACKUP_PATH}]" input_var
+if [ -n "${input_var}" ]; then
+    BACKUP_PATH="${input_var}"
+fi
 
 # Image file name
 IMAGE_FILE="${BACKUP_PATH}/$(date +%Y-%m-%d)-${DISTRIB_ID}-${DISTRIB_CODENAME}.img"
