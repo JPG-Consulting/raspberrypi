@@ -1,0 +1,44 @@
+#!/bin/bash
+
+GIT_URL='http://gerrit.asterisk.org/asterisk'
+
+function install_asterisk_prerequisites()
+{
+    echo "Installing prerequisites."
+    apt-get install -y -qq git-core build-essential libsqlite3-dev libxml2-dev libncurses5-dev libncursesw5-dev libiksemel-dev libssl-dev libeditline-dev libedit-dev curl libcurl4-gnutls-dev
+    if [ $? -ne 0 ]; then
+        echo "Error: Could not install prerequisites."
+        exit 1
+    fi
+}
+
+function list_asterisk_branches()
+{
+    local remote_branches=''
+    local i=1
+    local branches=''    
+	if [ "$1" == "certified" ]; then
+		remote_branches=$(git ls-remote -h $GIT_URL | sed 's|.*refs/heads/||' | grep '^certified/')
+	elif [ "$1" == "team" ]; then
+		remote_branches=$(git ls-remote -h $GIT_URL | sed 's|.*refs/heads/||' | grep '^team/')
+	else
+		remote_branches=$(git ls-remote -h $GIT_URL | sed 's|.*refs/heads/||' | grep -v '^team/' | grep -v '^certified/')
+	fi
+
+    remote_branches=( $(echo ${remote_branches}) )
+    for branch in "${remote_branches[@]}"; do
+        branches="${branches} ${i} ${branch} "
+        i=$(expr ${i} + 1)
+    done
+
+    whiptail --menu "Please choose the version to deploy" 15 40 5 ${branches}
+}
+
+
+if [[ $EUID -ne 0 ]]; then
+    echo "This script must be run as root" 1>&2
+    exit 1
+fi
+
+install_asterisk_prerequisites
+
