@@ -248,6 +248,20 @@ function do_backup()
         exit 1
     fi
     
+    # Launch raspi-config on login
+    if [ -d ${MOUNT_PATH}/home/pi ]; then
+        if [ ! -f ${MOUNT_PATH}/home/pi/.bash_profile ]; then
+            echo "rm -f /home/pi/.bash_profile" > ${MOUNT_PATH}/home/pi/.bash_profile
+            echo "sudo raspi-config" >> ${MOUNT_PATH}/home/pi/.bash_profile
+        else
+            echo "/home/pi/.backup_postinstall" >> ${MOUNT_PATH}/home/pi/.bash_profile
+            
+            echo "sed -i '$d' /home/pi/.bash_profile" > ${MOUNT_PATH}/home/pi/.backup_postinstall
+            echo "rm -f /home/pi/.backup_postinstall" >> ${MOUNT_PATH}/home/pi/.backup_postinstall
+            echo "sudo raspi-config" >> ${MOUNT_PATH}/home/pi/.bash_profile
+        fi
+    fi
+    
     unmount_image
     delete_lo
 }
