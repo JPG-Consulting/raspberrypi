@@ -56,8 +56,22 @@ function create_image()
     fi
 
     parted ${IMAGE_FILE} --script -- mklabel msdos
+    if [ $? -ne 0 ]; then
+        echo "Failed to create disk label."
+        exit 1
+    fi
+    
     parted ${IMAGE_FILE} --script -- mkpart primary fat32 ${bootfs_start} ${bootfs_end}
+    if [ $? -ne 0 ]; then
+        echo "Failed to create boot partition."
+        exit 1
+    fi
+    
     parted ${IMAGE_FILE} --script -- mkpart primary ext4 ${rootfs_start} -1
+    if [ $? -ne 0 ]; then
+        echo "Failed to create root partition."
+        exit 1
+    fi
 }
 
 create_image
