@@ -56,7 +56,7 @@ function create_image()
     fi
 
     parted ${IMAGE_FILE} --script -- mklabel msdos
-    parted ${IMAGE_FILE} --script -- mkpart primary fat32 ${bootfs_start} ${bootsf_size}
+    parted ${IMAGE_FILE} --script -- mkpart primary fat32 ${bootfs_start} ${bootfs_size}
     parted ${IMAGE_FILE} --script -- mkpart primary ext4 ${rootfs_start} -1
 }
 
