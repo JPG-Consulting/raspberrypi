@@ -1,0 +1,26 @@
+#!/bin/bash
+
+IMAGE_FREESPACE=64
+
+ROOTFS_SIZE=`df -B MB | grep 'rootfs' | awk '{print $3}' | awk -F "MB" '{print $1}'`
+if [ -z ${ROOTFS_SIZE} ]; then
+    echo "Unable to get root filesystem size."
+    exit 1
+fi
+
+BOOTFS_SIZE=`df -B MB | grep '/dev/mmcblk0p1' | awk '{print $2}' | awk -F "MB" '{print $1}'`
+if [ -z ${BOOTFS_SIZE} ]; then
+    echo "Unable to get boot filesystem size."
+    exit 1
+fi
+
+if [ $IMAGE_FREESPACE -lt 8 ]; then
+    $IMAGE_FREESPACE=8
+fi
+
+IMAGE_SIZE=$(expr ${ROOTFS_SIZE} + ${BOOTFS_SIZE} + ${IMAGE_FREESPACE} )
+
+echo "Boot size ${BOOTFS_SIZE}"
+echo "Root size ${ROOTFS_SIZE}"
+echo "Image size: ${IMAGE_SIZE}"
+        
