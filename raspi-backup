@@ -247,7 +247,17 @@ function do_backup()
     delete_lo
 }
 
-IMAGE_FILE="${BACKUP_PATH}/rpi_backup.img"
+# Image file name
+backup_date=$(date +%Y-%m-%d)
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$ID
+elif [ -f /etc/debian_version ]; then
+    OS='debian'
+else
+    OS=$(uname -s)
+fi
+IMAGE_FILE="${BACKUP_PATH}/${backup_date}-${OS}.img"
 
 create_image
 do_backup
