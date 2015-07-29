@@ -2,6 +2,51 @@
 BACKUP_PATH='/root'
 IMAGE_FREESPACE=64
 
+function delete_lo()
+{
+    partx -d ${IMAGE_LOOP}p1
+    if [ $? -ne 0 ]; then
+        echo "Failed to delete loop device boot partition."
+        partx -d ${IMAGE_LOOP}p2
+        losetup -d ${IMAGE_LOOP}    
+        exit 1
+    fi
+    
+    partx -d ${IMAGE_LOOP}p2
+    if [ $? -ne 0 ]; then
+        echo "Failed to delete loop device root partition."
+        losetup -d ${IMAGE_LOOP}    
+        exit 1
+    fi
+    
+    losetup -d ${IMAGE_LOOP}
+    if [ $? -ne 0 ]; then
+        echo "Failed to delete loop device."
+        exit 1
+    fi
+}
+
+function setup_lo()
+{
+    IMAGE_LOOP=$(losetup -f)
+    if [ -z "${IMAGE_LOOP}" ]; then
+        echo "Error setting up loop device."
+        exit 1
+    fi
+    
+    losetup -f $IMAGE_FILE
+    if [ $? -ne 0 ]; then
+        echo "Failed to create loop device."
+        exit 1
+    fi
+    
+    partx -a ${IMAGE_LOOP}
+    if [ $? -ne 0 ]; then
+        echo "Failed to create loop device for partitions."
+        exit 1
+    fi
+}
+
 function create_image()
 {
     local bootfs_start=$(parted /dev/mmcblk0 -ms unit s p | grep "^1" | cut -f 2 -d:)
@@ -72,6 +117,24 @@ function create_image()
         echo "Failed to create root partition."
         exit 1
     fi
+    
+    setup_lo
+    
+    mkfs.vfat ${IMAGE_LOOP}p1
+    if [ $? -ne 0 ]; then
+        echo "Error formating boot partition."
+        delete_lo
+        exit 1
+    fi
+    
+    mkfs.ext4 ${IMAGE_LOOP}p2
+    if [ $? -ne 0 ]; then
+        echo "Error formating root partition."
+        delete_lo
+        exit 1
+    fi
+    
+    delete_lo
 }
 
 create_image
