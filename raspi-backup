@@ -143,25 +143,26 @@ function create_image()
     local image_size=$(expr ${bootfs_size} + ${rootfs_size} + ${IMAGE_FREESPACE} )    
     
     echo "Creating image file..."
-    dd if=/dev/zero of=${IMAGE_FILE} bs=1M count=${image_size}
+    dd if=/dev/zero of=${IMAGE_FILE} bs=1M count=${image_size} >& /dev/null
     if [ $? -ne 0 ]; then
         echo "Failed to create image file."
         exit 1
     fi
 
-    parted ${IMAGE_FILE} --script -- mklabel msdos
+    echo "Creating partitions."
+    parted ${IMAGE_FILE} --script -- mklabel msdos >& /dev/null
     if [ $? -ne 0 ]; then
         echo "Failed to create disk label."
         exit 1
     fi
     
-    parted ${IMAGE_FILE} --script -- mkpart primary fat32 ${bootfs_start} ${bootfs_end}
+    parted ${IMAGE_FILE} --script -- mkpart primary fat32 ${bootfs_start} ${bootfs_end} >& /dev/null
     if [ $? -ne 0 ]; then
         echo "Failed to create boot partition."
         exit 1
     fi
     
-    parted ${IMAGE_FILE} --script -- mkpart primary ext4 ${rootfs_start} -1
+    parted ${IMAGE_FILE} --script -- mkpart primary ext4 ${rootfs_start} -1 >& /dev/null
     if [ $? -ne 0 ]; then
         echo "Failed to create root partition."
         exit 1
@@ -169,14 +170,16 @@ function create_image()
     
     setup_lo
     
-    mkfs.vfat -I ${IMAGE_LOOP}p1
+    echo "Formatting boot partition."
+    mkfs.vfat -I ${IMAGE_LOOP}p1 >& /dev/null
     if [ $? -ne 0 ]; then
         echo "Error formating boot partition."
         delete_lo
         exit 1
     fi
     
-    mkfs.ext4 ${IMAGE_LOOP}p2
+    echo "Formattinng root partition."
+    mkfs.ext4 ${IMAGE_LOOP}p2 >& /dev/null
     if [ $? -ne 0 ]; then
         echo "Error formating root partition."
         delete_lo
