@@ -1,5 +1,5 @@
 #!/bin/bash
-
+BACKUP_PATH='/root'
 IMAGE_FREESPACE=64
 
 ROOTFS_SIZE=`df -B MB | grep 'rootfs' | awk '{print $3}' | awk -F "MB" '{print $1}'`
@@ -20,7 +20,12 @@ fi
 
 IMAGE_SIZE=$(expr ${ROOTFS_SIZE} + ${BOOTFS_SIZE} + ${IMAGE_FREESPACE} )
 
-echo "Boot size ${BOOTFS_SIZE}"
-echo "Root size ${ROOTFS_SIZE}"
-echo "Image size: ${IMAGE_SIZE}"
+echo "Creating image file..."
+IMAGE_FILE="${BACKUP_PATH}/rpi_backup.img"
+dd if=/dev/zero of=${IMAGE_FILE} bs=1M count=${IMAGE_SIZE}
+
+parted ${IMAGE_FILE} --script -- mklabel msdos
+parted ${IMAGE_FILE} --script -- mkpart primary fat32 0 64
+parted ${IMAGE_FILE} --script -- mkpart primary ext4 64 -1
         
+echo "Done."
