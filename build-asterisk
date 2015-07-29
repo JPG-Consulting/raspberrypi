@@ -5,6 +5,7 @@ GIT_URL='http://gerrit.asterisk.org/asterisk'
 function install_asterisk_prerequisites()
 {
     echo "Installing prerequisites."
+    apt-get -y -qq update
     apt-get install -y -qq git-core build-essential libsqlite3-dev libxml2-dev libncurses5-dev libncursesw5-dev libiksemel-dev libssl-dev libeditline-dev libedit-dev curl libcurl4-gnutls-dev
     if [ $? -ne 0 ]; then
         echo "Error: Could not install prerequisites."
@@ -16,14 +17,16 @@ function list_asterisk_branches()
 {
     local remote_branches=''
     local i=1
-    local branches=''    
-	if [ "$1" == "certified" ]; then
-		remote_branches=$(git ls-remote -h $GIT_URL | sed 's|.*refs/heads/||' | grep '^certified/')
-	elif [ "$1" == "team" ]; then
-		remote_branches=$(git ls-remote -h $GIT_URL | sed 's|.*refs/heads/||' | grep '^team/')
-	else
-		remote_branches=$(git ls-remote -h $GIT_URL | sed 's|.*refs/heads/||' | grep -v '^team/' | grep -v '^certified/')
-	fi
+    local branches=''
+    local branch=''
+
+    if [ "$1" == "certified" ]; then
+        remote_branches=$(git ls-remote -h $GIT_URL | sed 's|.*refs/heads/||' | grep '^certified/')
+    elif [ "$1" == "team" ]; then
+        remote_branches=$(git ls-remote -h $GIT_URL | sed 's|.*refs/heads/||' | grep '^team/')
+    else
+        remote_branches=$(git ls-remote -h $GIT_URL | sed 's|.*refs/heads/||' | grep -v '^team/' | grep -v '^certified/')
+    fi
 
     remote_branches=( $(echo ${remote_branches}) )
     for branch in "${remote_branches[@]}"; do
@@ -31,7 +34,20 @@ function list_asterisk_branches()
         i=$(expr ${i} + 1)
     done
 
-    whiptail --menu "Please choose the version to deploy" 15 40 5 ${branches}
+    branch=$(whiptail --menu "Please choose the version to deploy" 15 40 5 ${branches} 3>&1 1>&2 2>&3)
+
+    GIT_BRANCH=${remote_branches[$(expr ${branch} - 1)]}
+}
+
+function download_asterisk_branch()
+{
+    cd /usr/src
+    if [ ! -d /usr/src/asterisk-${GIT_BRANCH} ]; then
+        git clone -b ${GIT_BRANCH} http://gerrit.asterisk.org/asterisk asterisk-${GIT_BRANCH}
+    else
+        cd /usr/src/asterisk-${GIT_BRANCH}
+        git pull
+    fi
 }
 
 
@@ -41,4 +57,8 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 install_asterisk_prerequisites
+
+list_asterisk_branches
+
+download_asterisk_branch
 
