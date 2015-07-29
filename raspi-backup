@@ -29,7 +29,7 @@ function create_image()
         exit 1
     fi
     
-    local rootfs_size_mb==`df -B MB | grep 'rootfs' | awk '{print $2}' | awk -F "MB" '{print $1}'`
+    local rootfs_size_mb=`df -B MB | grep 'rootfs' | awk '{print $2}' | awk -F "MB" '{print $1}'`
     if [ -z ${rootfs_size_mb} ]; then
         echo "Unable to get root filesystem size."
         exit 1
@@ -50,6 +50,10 @@ function create_image()
     echo "Creating image file..."
     IMAGE_FILE="${BACKUP_PATH}/rpi_backup.img"
     dd if=/dev/zero of=${IMAGE_FILE} bs=1M count=${image_size}
+    if [ $? -ne 0 ]; then
+        echo "Failed to create image file."
+        exit 1
+    fi
 
     parted ${IMAGE_FILE} --script -- mklabel msdos
     parted ${IMAGE_FILE} --script -- mkpart primary fat32 ${bootfs_start} ${bootsf_size}
