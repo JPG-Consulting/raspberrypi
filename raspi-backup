@@ -17,7 +17,7 @@ function create_image()
     fi
     
     local rootfs_start=$(parted /dev/mmcblk0 -ms unit s p | grep "^2" | cut -f 2 -d:)
-    if [ -z ${rootfs_size_mb} ]; then
+    if [ -z ${rootfs_start} ]; then
         echo "Unable to get root filesystem start offset."
         exit 1
     fi
