@@ -141,7 +141,6 @@ function create_image()
     local image_size=$(expr ${bootfs_size} + ${rootfs_size} + ${IMAGE_FREESPACE} )    
     
     echo "Creating image file..."
-    IMAGE_FILE="${BACKUP_PATH}/rpi_backup.img"
     dd if=/dev/zero of=${IMAGE_FILE} bs=1M count=${image_size}
     if [ $? -ne 0 ]; then
         echo "Failed to create image file."
@@ -221,7 +220,7 @@ function do_backup()
           --exclude '/sys' \
           --exclude '/tmp' \
           --exclude 'lost\+found' \
-          --exclude '/etc/udev/rules.d/70-persistent-net.rules' \ 
+          --exclude '/etc/udev/rules.d/70-persistent-net.rules' \
           --exclude "${MOUNT_PATH}" \
           --exclude "${IMAGE_FILE}" \
           / ${MOUNT_PATH}/
@@ -236,6 +235,9 @@ function do_backup()
     delete_lo
 }
 
+IMAGE_FILE="${BACKUP_PATH}/rpi_backup.img"
+
 create_image
 do_backup
+
 echo "Done."
