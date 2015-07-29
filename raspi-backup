@@ -27,9 +27,10 @@ function create_image()
     if [ -z ${bootfs_size_mb} ]; then
         echo "Unable to get boot filesystem size."
         exit 1
+        
     fi
     
-    local rootfs_size_mb=`df -B MB | grep 'rootfs' | awk '{print $2}' | awk -F "MB" '{print $1}'`
+    local rootfs_size_mb=`df -B MB | grep 'rootfs' | awk '{print $3}' | awk -F "MB" '{print $1}'`
     if [ -z ${rootfs_size_mb} ]; then
         echo "Unable to get root filesystem size."
         exit 1
