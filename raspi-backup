@@ -10,9 +10,9 @@ function create_image()
         exit 1
     fi
     
-    local bootfs_size=$(parted /dev/mmcblk0 -ms unit s p | grep "^1" | cut -f 3 -d:)
-    if [ -z ${bootfs_size} ]; then
-        echo "Unable to get boot filesystem size."
+    local bootfs_end=$(parted /dev/mmcblk0 -ms unit s p | grep "^1" | cut -f 3 -d:)
+    if [ -z ${bootfs_end} ]; then
+        echo "Unable to get boot partition end offset."
         exit 1
     fi
     
@@ -23,14 +23,14 @@ function create_image()
     fi
     
     # Get sizes in MB
-    local bootfs_size_mb=`df -B MB | grep '/dev/mmcblk0p1' | awk '{print $2}' | awk -F "MB" '{print $1}'`
-    if [ -z ${bootfs_size_mb} ]; then
+    local bootfs_size=`df -B MB | grep '/dev/mmcblk0p1' | awk '{print $2}' | awk -F "MB" '{print $1}'`
+    if [ -z ${bootfs_size} ]; then
         echo "Unable to get boot filesystem size."
         exit 1
     fi
     
-    local rootfs_size_mb=`df -B MB | grep 'rootfs' | awk '{print $3}' | awk -F "MB" '{print $1}'`
-    if [ -z ${rootfs_size_mb} ]; then
+    local rootfs_size=`df -B MB | grep 'rootfs' | awk '{print $3}' | awk -F "MB" '{print $1}'`
+    if [ -z ${rootfs_size} ]; then
         echo "Unable to get root filesystem size."
         exit 1
     fi
@@ -45,7 +45,7 @@ function create_image()
         $IMAGE_FREESPACE=8
     fi
     
-    local image_size=$(expr ${bootfs_size_mb} + ${rootfs_size_mb} + ${IMAGE_FREESPACE} )    
+    local image_size=$(expr ${bootfs_size} + ${rootfs_size} + ${IMAGE_FREESPACE} )    
     
     echo "Creating image file..."
     IMAGE_FILE="${BACKUP_PATH}/rpi_backup.img"
@@ -56,7 +56,7 @@ function create_image()
     fi
 
     parted ${IMAGE_FILE} --script -- mklabel msdos
-    parted ${IMAGE_FILE} --script -- mkpart primary fat32 ${bootfs_start} ${bootfs_size}
+    parted ${IMAGE_FILE} --script -- mkpart primary fat32 ${bootfs_start} ${bootfs_end}
     parted ${IMAGE_FILE} --script -- mkpart primary ext4 ${rootfs_start} -1
 }
 
