@@ -272,13 +272,25 @@ function do_backup()
     delete_lo
 }
 
-read -p "Backup path: [${BACKUP_PATH}]" input_var
-if [ -n "${input_var}" ]; then
-    BACKUP_PATH="${input_var}"
+read -p "Backup path: [$(pwd)]: " input_var
+if [ -z "${input_var}" ]; then
+    BACKUP_PATH="$(pwd)"
+else
+    BACKUP_PATH="${input_var%/}"
+fi
+
+if [ ! -d ${BACKUP_PATH} ]; then
+    echo "Error: The backup path does not exist."
+    exit 1
 fi
 
 # Image file name
 IMAGE_FILE="${BACKUP_PATH}/$(date +%Y-%m-%d)-${DISTRIB_ID}-${DISTRIB_CODENAME}.img"
+
+if [ -f ${IMAGE_FILE} ]; then
+    echo "Deleting old backup file."
+    rm -f ${IMAGE_FILE}
+fi
 
 create_image
 do_backup
