@@ -10,7 +10,7 @@ function delete_mount()
 {
     if [ -d /backup ]; then
         if [ "${MOUNT_PATH}" == "/backup" ]; then
-            rm -f /backup
+            rm -rf /backup
         fi
     fi   
 }
