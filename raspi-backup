@@ -10,7 +10,7 @@ function create_image()
         exit 1
     fi
     
-    local bootfs_size=$(parted /dev/mmcblk0 -ms unit s p | grep "^1" | cut -f 4 -d:)
+    local bootfs_size=$(parted /dev/mmcblk0 -ms unit s p | grep "^1" | cut -f 3 -d:)
     if [ -z ${bootfs_size} ]; then
         echo "Unable to get boot filesystem size."
         exit 1
