@@ -167,7 +167,7 @@ function create_image()
     
     setup_lo
     
-    mkfs.vfat ${IMAGE_LOOP}p1
+    mkfs.vfat -I ${IMAGE_LOOP}p1
     if [ $? -ne 0 ]; then
         echo "Error formating boot partition."
         delete_lo
