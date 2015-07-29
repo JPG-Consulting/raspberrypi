@@ -303,6 +303,12 @@ fi
 create_image
 do_backup
 
+if [ -d /backup ]; then
+    if [ "${MOUNT_PATH}" == "/backup" ]; then
+        rm -f /backup
+    fi
+fi
+
 echo 
 echo "Backup stored at ${IMAGE_FILE}!"
 echo
