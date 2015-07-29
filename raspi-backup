@@ -253,12 +253,18 @@ function do_backup()
         if [ ! -f ${MOUNT_PATH}/home/pi/.bash_profile ]; then
             echo "rm -f /home/pi/.bash_profile" > ${MOUNT_PATH}/home/pi/.bash_profile
             echo "sudo raspi-config" >> ${MOUNT_PATH}/home/pi/.bash_profile
+            
+            chown pi:pi ${MOUNT_PATH}/home/pi/.bash_profile
+            chmod 0644 ${MOUNT_PATH}/home/pi/.bash_profile
         else
             echo "/home/pi/.backup_postinstall" >> ${MOUNT_PATH}/home/pi/.bash_profile
             
             echo "sed -i '$d' /home/pi/.bash_profile" > ${MOUNT_PATH}/home/pi/.backup_postinstall
             echo "rm -f /home/pi/.backup_postinstall" >> ${MOUNT_PATH}/home/pi/.backup_postinstall
             echo "sudo raspi-config" >> ${MOUNT_PATH}/home/pi/.bash_profile
+            
+            chown pi ${MOUNT_PATH}/home/pi/.backup_postinstall
+            chmod 0644 ${MOUNT_PATH}/home/pi/.backup_postinstall
         fi
     fi
     
