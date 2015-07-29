@@ -1,0 +1,196 @@
+#!/bin/bash
+
+# Files
+MOUNT_PATH=/media/bkup
+BOOT_MOUNT=/boot
+DEFAULT_RPI_IMAGE_SIZE=3724
+DEFAULT_BBB_IMAGE_SIZE=1828
+DEFAULT_IMAGE_SIZE=$DEFAULT_RPI_IMAGE_SIZE
+
+# Setting up echo fonts
+red='\e[0;31m'
+green='\e[0;32m'
+cyan='\e[0;36m'
+yellow='\e[1;33m'
+purple='\e[0;35m'
+NC='\e[0m' #No Color
+bold=`tput bold`
+normal=`tput sgr0`
+
+function setup_lo()
+{
+    DEVICE1=`losetup -f`
+    if [ -z "${DEVICE1}" ]; then
+        echo "Error setting up loop device."
+        exit 1
+    fi
+    losetup -f -o 1048576 --sizelimit 78643200 $IMAGE_FILE
+    if [ $? -ne 0 ]; then
+        echo "Error setting up loop device."
+        exit 1
+    fi
+    
+    DEVICE2=`losetup -f`
+    if [ -z "${DEVICE2}" ]; then
+        echo "Error setting up loop device."
+        losetup -d $DEVICE1
+        exit 1
+    fi
+    losetup -o 80740352 $IMAGE_FILE
+    if [ $? -ne 0 ]; then
+        echo "Error setting up loop device."
+        losetup -d $DEVICE1
+        exit 1
+    fi
+}
+
+function delete_lo()
+{
+    losetup -d $DEVICE1
+    if [ $? -ne 0 ]; then
+        echo "Error removing loop device."
+        losetup -d $DEVICE2
+        exit 1
+    fi
+    
+    losetup -d $DEVICE2
+    if [ $? -ne 0 ]; then
+        echo "Error removing loop device."
+        exit 1
+    fi
+}
+
+function mount_image()
+{
+    if [ ! -d ${MOUNT_PATH} ]; then
+        mkdir -p ${MOUNT_PATH}
+    fi
+    
+    mount $DEVICE2 ${MOUNT_PATH}
+    if [ $? -ne 0 ]; then
+        echo "Error mounting root partition"
+        delete_lo
+        exit 1
+    fi
+    
+    if [ ! -d ${MOUNT_PATH}${BOOT_MOUNT} ]; then
+        mkdir -p ${MOUNT_PATH}${BOOT_MOUNT}
+    fi
+    
+    mount $DEVICE1 ${MOUNT_PATH}${BOOT_MOUNT}
+    if [ $? -ne 0 ]; then
+        echo "Error mounting boot partition"
+        umount -l ${MOUNT_PATH}
+        delete_lo
+        exit 1
+    fi
+}
+
+function unmount_image()
+{
+    umount ${MOUNT_PATH}${BOOT_MOUNT}
+    if [ $? -ne 0 ]; then
+        echo "Error unmounting boot partition."
+        umount -l ${MOUNT_PATH}${BOOT_MOUNT}
+        umount -l ${MOUNT_PATH}
+        delete_lo
+        exit 1
+    fi
+    
+    umount ${MOUNT_PATH}
+    if [ $? -ne 0 ]; then
+        echo "Error unmounting root partition."
+        umount -l ${MOUNT_PATH}
+        delete_lo
+        exit 1
+    fi
+}
+
+function create_image()
+{
+    if [ -f ${IMAGE_FILE} ]; then
+        echo "Image file ${IMAGE_FILE} already exists!"
+        echo "Please remove it manually or specify a different file."
+        exit 1
+    fi
+    
+    echo "Creating image file. This will take a while...."
+    SEEKMB=$(expr $IMAGE_SIZE - 1)
+    dd bs=1M count=1 seek=$SEEKMB if=/dev/zero of=$IMAGE_FILE
+    if [ $? -ne 0 ]; then
+        echo "Error creating image file."
+        exit 1
+    fi
+    
+    LASTSECTOR=$(expr $IMAGE_SIZE \* 2048 - 1)
+    sync
+    parted $IMAGE_FILE << EOF
+        mktable msdos
+        unit s
+        mkpart primary fat32 2048 155647
+        mkpart primary 157696 $LASTSECTOR
+        quit
+    EOF
+    if [ $? -ne 0 ]; then
+        echo "Error creating partitions."
+        exit 1
+    fi
+    
+    setup_lo
+    
+    mkfs.vfat $DEVICE1
+    if [ $? -ne 0 ]; then
+        echo "Error formating fat partition."
+        delete_lo
+        exit 1
+    fi
+    
+    mkfs.ext4 $DEVICE2
+    if [ $? -ne 0 ]; then
+        echo "Error formating ext4 partition."
+        delete_lo
+        exit 1
+    fi
+    
+    mkdir ${MOUNT_PATH}/dev {MOUNT_PATH}/media ${MOUNT_PATH}/mnt ${MOUNT_PATH}/proc ${MOUNT_PATH}/run ${MOUNT_PATH}/sys ${MOUNT_PATH}/tmp
+    if [ $? -ne 0 ]; then
+        echo "Error creating directories."
+        unmount_image
+        delete_lo
+        exit 1
+    fi
+    
+    chmod a+rwxt ${MOUNT_PATH}/tmp
+    
+    umount_image
+    delete_lo
+}
+
+function do_backup()
+{
+    if [ ! -f $IMAGE_FILE ]; then
+        echo "Image file $IMAGE_FILE does not exist."
+        exit 1
+    fi
+    
+    setup_lo
+    mount_image
+    
+    sync
+    rsync -aDH --partial --numeric-ids --delete --force --exclude '/dev' --exclude '/media' --exclude '/mnt' --exclude '/proc' --exclude '/run' --exclude '/sys' --exclude '/tmp' --exclude 'lost\+found' --exclude '/etc/udev/rules.d/70-persistent-net.rules' / ${MOUNT_PATH}/
+    if [ $? -ne 0 ]; then
+        echo "Error running backup"
+        unmount_image
+        delete_lo
+        exit 1
+    fi
+    
+    unmount_image
+    delete_lo
+}
+
+echo 
+create_image
+echo "Running backup now..."
+do_backup
+echo "Finished."
