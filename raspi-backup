@@ -1,5 +1,5 @@
 #!/bin/bash
-BACKUP_PATH=$(pwd)
+BACKUP_PATH=''
 IMAGE_FREESPACE=64
 DISTRIB_ID='raspbian'
 DISTRIB_CODENAME='wheezy'
