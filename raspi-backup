@@ -207,10 +207,22 @@ function do_backup()
     setup_lo
     mount_image
     
+    # Do not include a dhpys swapfile in the clone.  dhpys-swapfile will
+    # regenerate it at boot.
+    #
+    if [ -f /etc/dphys-swapfile ]; then
+        SWAPFILE=`cat /etc/dphys-swapfile | grep ^CONF_SWAPFILE | cut -f 2 -d=`
+        if [ "$SWAPFILE" = "" ]; then
+            SWAPFILE=/var/swap
+        fi
+        EXCLUDE_SWAPFILE="--exclude $SWAPFILE"
+    fi
+
     # Exclude fuse mountpoint .gvfs, various other mount points, and tmpfs
     # file systems from the rsync.
     sync
     rsync ${RSYNC_OPTIONS} --delete \
+          $EXCLUDE_SWAPFILE \
           --exclude '.gvfs' \
           --exclude '/dev' \
           --exclude '/media' \
