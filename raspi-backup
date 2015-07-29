@@ -209,6 +209,9 @@ function do_backup()
     setup_lo
     mount_image
     
+    echo "Starting the filesystem rsync to ${IMAGE_FILE}"
+    echo "(This may take several minutes)..."
+
     # Do not include a dhpys swapfile in the clone.  dhpys-swapfile will
     # regenerate it at boot.
     #
@@ -219,7 +222,7 @@ function do_backup()
         fi
         EXCLUDE_SWAPFILE="--exclude $SWAPFILE"
     fi
-
+    
     # Exclude fuse mountpoint .gvfs, various other mount points, and tmpfs
     # file systems from the rsync.
     sync
