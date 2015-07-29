@@ -183,7 +183,7 @@ function create_image()
     
     mount_image
     
-    mkdir ${MOUNT_PATH}/dev {MOUNT_PATH}/media ${MOUNT_PATH}/mnt ${MOUNT_PATH}/proc ${MOUNT_PATH}/run ${MOUNT_PATH}/sys ${MOUNT_PATH}/tmp
+    mkdir ${MOUNT_PATH}/dev ${MOUNT_PATH}/media ${MOUNT_PATH}/mnt ${MOUNT_PATH}/proc ${MOUNT_PATH}/run ${MOUNT_PATH}/sys ${MOUNT_PATH}/tmp
     if [ $? -ne 0 ]; then
         echo "Error creating directories."
         unmount_image
