@@ -1,6 +1,8 @@
 #!/bin/bash
 BACKUP_PATH='/root'
 IMAGE_FREESPACE=64
+DISTRIB_ID='raspbian'
+DISTRIB_CODENAME='wheezy'
 MOUNT_PATH=/mnt
 RSYNC_OPTIONS='-aDH --force --partial --numeric-ids'
 
@@ -248,16 +250,7 @@ function do_backup()
 }
 
 # Image file name
-backup_date=$(date +%Y-%m-%d)
-if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    OS=$ID
-elif [ -f /etc/debian_version ]; then
-    OS='debian'
-else
-    OS=$(uname -s)
-fi
-IMAGE_FILE="${BACKUP_PATH}/${backup_date}-${OS}.img"
+IMAGE_FILE="${BACKUP_PATH}/$(date +%Y-%m-%d)-${DISTRIB_ID}-${DISTRIB_CODENAME}.img"
 
 create_image
 do_backup
