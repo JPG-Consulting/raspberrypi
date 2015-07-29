@@ -35,7 +35,7 @@ function create_image()
         exit 1
     fi
 
-    if ! [[ ${IMAGE_FREESPACE} =~ '^[0-9]+$' ]] ; then
+    if ! [[ ${IMAGE_FREESPACE} =~ ^[0-9]+$ ]] ; then
         echo "Freespace must be a positive numeric value" 
         exit 1
     fi
