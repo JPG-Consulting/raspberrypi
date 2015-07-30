@@ -72,7 +72,8 @@ do_chan_dongle() {
 
 do_modules_menu()
 {
-  local MODULES_AVAILABLE=("chan_module")
+  local AVAILABLE_MODULES=("chan_module")
+  local MODULE_IS_ACTIVE=1
   
   if grep -q -e '^noload => chan_dongle.so' /etc/asterisk/modules.conf; then
     chan_dongle_state=OFF
@@ -86,17 +87,25 @@ do_modules_menu()
     3>&1 1>&2 2>&3)
   
   # Disable all available modules
-  for module in "${MODULES[@]}"
+  for module in "${AVAILABLE_MODULES[@]}"
   do
-    sed -e "s|^load => ${module}.so|noload => ${module}.so|" -i /etc/asterisk/modules.conf
-    grep -q -e "^noload => ${module}.so" /etc/asterisk/modules.conf || echo "noload => ${module}.so" >> /etc/asterisk/modules.conf
-  done
-  
-  # Enable the selected modules
-  for module in "${MODULES[@]}"
-  do
-    sed -e "s|^noload => ${module}.so|load => ${module}.so|" -i /etc/asterisk/modules.conf
-    grep -q -e "^load => ${module}.so" /etc/asterisk/modules.conf || echo "load => ${module}.so" >> /etc/asterisk/modules.conf
+    MODULE_IS_ACTIVE=0
+    
+    for e in "${MODULES[@]}"
+    do
+      if [[ "$module" == "$e" ]]; then
+        MODULE_IS_ACTIVE=1
+        break;
+      fi
+    done
+    
+    if [ ${MODULE_IS_ACTIVE} -eq 1 ]; then
+      sed -e "s|^noload => ${module}.so|load => ${module}.so|" -i /etc/asterisk/modules.conf
+      grep -q -e "^load => ${module}.so" /etc/asterisk/modules.conf || echo "load => ${module}.so" >> /etc/asterisk/modules.conf
+    else
+      sed -e "s|^load => ${module}.so|noload => ${module}.so|" -i /etc/asterisk/modules.conf
+      grep -q -e "^noload => ${module}.so" /etc/asterisk/modules.conf || echo "noload => ${module}.so" >> /etc/asterisk/modules.conf
+    fi
   done
 }
 
