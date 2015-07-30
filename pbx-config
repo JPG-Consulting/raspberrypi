@@ -30,6 +30,12 @@ do_chan_dongle() {
     --yes-button Enable --no-button Disable
   RET=$?
   if [ $RET -eq 0 ]; then
+    # Backup the file
+    if [ ! -f /etc/asterisk/dongle.conf.orig ]; then
+      cp /etc/asterisk/dongle.conf /etc/asterisk/dongle.con.orig
+    fi
+    
+    # Enable the module
     sed -e 's|^noload => chan_dongle.so|load => chan_dongle.so|' -i /etc/asterisk/modules.conf
     grep -q -e '^load => chan_dongle.so' /etc/asterisk/modules.conf || echo "load => chan_dongle.so" >> /etc/asterisk/modules.conf
     whiptail --msgbox "chan_dongle module enabled" 20 60 1
