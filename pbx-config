@@ -1,5 +1,7 @@
 #!/bin/bash
 
+DEFAULT_TITLE='Raspberry Pi Software Configuration Tool (pbx-config)'
+
 calc_wt_size() {
   # NOTE: it's tempting to redirect stderr to /dev/null, so supress error 
   # output from tput. However in this case, tput detects neither stdout or 
@@ -25,6 +27,18 @@ do_finish() {
   exit 0
 }
 
+do_chan_dongle_set_number()
+{
+  CURRENT_HOSTNAME=`cat /etc/hostname | tr -d " \t\n\r"`
+  NEW_HOSTNAME=$(whiptail --inputbox "Please enter a hostname" 20 60 "$CURRENT_HOSTNAME" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    echo $NEW_HOSTNAME > /etc/hostname
+    sed -i '/^\[dongle0\]$/,/^\[/ s/^enabled = false/enabled = true/' /etc/fail2ban/jail.conf
+    sed -i "s/127.0.1.1.*$CURRENT_HOSTNAME/127.0.1.1\t$NEW_HOSTNAME/g" /etc/hosts
+    ASK_TO_REBOOT=1
+  fi
+}
+
 do_chan_dongle() {
   whiptail --yesno "Would you like the chan_dongle module enabled or disabled?" 20 60 2 \
     --yes-button Enable --no-button Disable
@@ -34,6 +48,8 @@ do_chan_dongle() {
     if [ ! -f /etc/asterisk/dongle.conf.orig ]; then
       cp /etc/asterisk/dongle.conf /etc/asterisk/dongle.con.orig
     fi
+    
+    do_chan_dongle_set_number
     
     # Enable the module
     sed -e 's|^noload => chan_dongle.so|load => chan_dongle.so|' -i /etc/asterisk/modules.conf
@@ -50,18 +66,16 @@ do_chan_dongle() {
 
 do_modules_menu()
 {
-  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (pbx-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-    "chan_dongle" "Configure chan_dongle module" \
-    3>&1 1>&2 2>&3)
-  RET=$?
-  if [ $RET -eq 1 ]; then
-    return 0
-  elif [ $RET -eq 0 ]; then
-    case "$FUN" in
-      chan_dongle) do_chan_dongle ;;
-      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+  if grep -q -e '^noload => chan_dongle.so' /etc/asterisk/modules.conf; then
+    chan_dongle_state=OFF
+  else
+    chan_dongle_state=ON
   fi
+  
+  MODULES=$(whiptail --title "Linux Distro version" --checklist \
+    "What distro are you running?" 15 60 4 \
+    "chan_dongle" "Channel driver for Huawei UMTS/3G USB modems (dongles)" ${chan_dongle_state} \
+    3>&1 1>&2 2>&3)
 }
 
 #
@@ -69,7 +83,7 @@ do_modules_menu()
 #
 calc_wt_size
 while true; do
-  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (pbx-config)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
+  FUN=$(whiptail --title "${DEFAULT_TITLE}" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
     "1 Module Options" "Configure Asterisk modules" \
     3>&1 1>&2 2>&3)
   RET=$?
