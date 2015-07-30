@@ -75,6 +75,8 @@ fi
 sed -i '/[2-6]:23:respawn:\/sbin\/getty 38400 tty[2-6]/s%^%#%g' /etc/inittab
 
 # Install the backup script
-wget --no-cache https://raw.githubusercontent.com/JPG-Consulting/raspberrypi/rpi-3.18.y/raspi-backup /usr/bin/raspi-backup
-chown root /usr/bin/raspi-backup
-chmod +x /usr/bin/raspi-backup
+wget --no-cache https://raw.githubusercontent.com/JPG-Consulting/raspberrypi/rpi-3.18.y/raspi-backup raspi-backup
+sleep 5
+chown root raspi-backup
+chmod +x raspi-backup
+mv raspi-backup /usr/bin
