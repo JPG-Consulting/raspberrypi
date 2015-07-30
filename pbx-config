@@ -18,6 +18,12 @@ calc_wt_size() {
   WT_MENU_HEIGHT=$(($WT_HEIGHT-7))
 }
 
+array_contains_element () {
+  local e
+  for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
+  return 1
+}
+
 do_finish() {
   whiptail --yesno "Would you like to restart Asterisk now?" 20 60 2
   if [ $? -eq 0 ]; then # yes
@@ -66,16 +72,32 @@ do_chan_dongle() {
 
 do_modules_menu()
 {
+  local MODULES_AVAILABLE=("chan_module")
+  
   if grep -q -e '^noload => chan_dongle.so' /etc/asterisk/modules.conf; then
     chan_dongle_state=OFF
   else
     chan_dongle_state=ON
   fi
   
-  MODULES=$(whiptail --title "Linux Distro version" --checklist \
+  MODULES=$(whiptail --title "${DEFAULT_TITLE}" --checklist \
     "What distro are you running?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
     "chan_dongle" "Channel driver for Huawei UMTS/3G USB modems (dongles)" ${chan_dongle_state} \
     3>&1 1>&2 2>&3)
+  
+  # Disable all available modules
+  for module in "${MODULES[@]}"
+  do
+    sed -e "s|^load => ${module}.so|noload => ${module}.so|" -i /etc/asterisk/modules.conf
+    grep -q -e "^noload => ${module}.so" /etc/asterisk/modules.conf || echo "noload => ${module}.so" >> /etc/asterisk/modules.conf
+  done
+  
+  # Enable the selected modules
+  for module in "${MODULES[@]}"
+  do
+    sed -e "s|^noload => ${module}.so|load => ${module}.so|" -i /etc/asterisk/modules.conf
+    grep -q -e "^load => ${module}.so" /etc/asterisk/modules.conf || echo "load => ${module}.so" >> /etc/asterisk/modules.conf
+  done
 }
 
 #
