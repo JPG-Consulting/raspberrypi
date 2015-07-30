@@ -73,7 +73,7 @@ do_modules_menu()
   fi
   
   MODULES=$(whiptail --title "Linux Distro version" --checklist \
-    "What distro are you running?" 15 60 4 \
+    "What distro are you running?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
     "chan_dongle" "Channel driver for Huawei UMTS/3G USB modems (dongles)" ${chan_dongle_state} \
     3>&1 1>&2 2>&3)
 }
