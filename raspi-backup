@@ -4,7 +4,7 @@ IMAGE_FREESPACE=64
 DISTRIB_ID='raspbian'
 DISTRIB_CODENAME='wheezy'
 MOUNT_PATH=/backup
-RSYNC_OPTIONS='-aDH --force --partial --numeric-ids'
+RSYNC_OPTIONS='--force -rltWDEgopt'
 
 function delete_mount()
 {
