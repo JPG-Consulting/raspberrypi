@@ -1,0 +1,78 @@
+#!/bin/bash
+
+calc_wt_size() {
+  # NOTE: it's tempting to redirect stderr to /dev/null, so supress error 
+  # output from tput. However in this case, tput detects neither stdout or 
+  # stderr is a tty and so only gives default 80, 24 values
+  WT_HEIGHT=17
+  WT_WIDTH=$(tput cols)
+
+  if [ -z "$WT_WIDTH" ] || [ "$WT_WIDTH" -lt 60 ]; then
+    WT_WIDTH=80
+  fi
+  if [ "$WT_WIDTH" -gt 178 ]; then
+    WT_WIDTH=120
+  fi
+  WT_MENU_HEIGHT=$(($WT_HEIGHT-7))
+}
+
+do_finish() {
+  whiptail --yesno "Would you like to restart Asterisk now?" 20 60 2
+  if [ $? -eq 0 ]; then # yes
+    sync
+    service asterisk restart
+  fi
+  exit 0
+}
+
+do_chan_dongle() {
+  whiptail --yesno "Would you like the chan_dongle module enabled or disabled?" 20 60 2 \
+    --yes-button Enable --no-button Disable
+  RET=$?
+  if [ $RET -eq 0 ]; then
+    sed -i 's|noload => chan_dongle.so|load => chan_dongle.so|' /etc/asterisk/modules.conf &&
+    whiptail --msgbox "chan_dongle module enabled" 20 60 1
+  elif [ $RET -eq 1 ]; then
+    sed -i 's|load => chan_dongle.so|noload => chan_dongle.so|' /etc/asterisk/modules.conf &&
+    whiptail --msgbox "chan_dongle module disabled" 20 60 1
+  else
+    return $RET
+  fi
+}
+
+do_modules_menu()
+{
+  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (pbx-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+    "chan_dongle" "Configure chan_dongle module" \
+    3>&1 1>&2 2>&3)
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    return 0
+  elif [ $RET -eq 0 ]; then
+    case "$FUN" in
+      chan_dongle) do_chan_dongle ;;
+      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+  fi
+}
+
+#
+# Interactive use loop
+#
+calc_wt_size
+while true; do
+  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (pbx-config)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
+    "1 Module Options" "Configure Asterisk modules" \
+    3>&1 1>&2 2>&3)
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    do_finish
+  elif [ $RET -eq 0 ]; then
+    case "$FUN" in
+      1\ *) do_modules_menu ;;
+      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+  else
+    exit 1
+  fi
+done
