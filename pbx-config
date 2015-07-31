@@ -71,6 +71,7 @@ do_chan_dongle() {
 }
 
 do_modules_menu()
+{
   local module=''
   local AVAILABLE_MODULES=(
     chan_dongle "Channel driver for Huawei uMTS/3G USB modems" ON
