@@ -91,7 +91,7 @@ do_modules_menu()
   RET=$?
   if [ $RET -eq 1 ]; then
     return 0
-  elif [$RET -eq 0 ]; then
+  elif [ $RET -eq 0 ]; then
     MODULES=($(echo ${MODULES} | tr -d '"'))
     
     for ((i=0; i<${#AVAILABLE_MODULES[@]}; i+=3)); do
