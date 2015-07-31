@@ -72,18 +72,25 @@ do_chan_dongle() {
 
 do_modules_menu()
 {
-  local AVAILABLE_MODULES=("chan_module")
+  local AVAILABLE_MODULES=("chan_dongle")
+  declare -a AVAILABLE_MODULES_DESCRIPTION
   local MODULE_IS_ACTIVE=1
+  local menu_list=''
   
-  if grep -q -e '^noload => chan_dongle.so' /etc/asterisk/modules.conf; then
-    chan_dongle_state=OFF
-  else
-    chan_dongle_state=ON
-  fi
+  AVAILABLE_MODULES_DESCRIPTION['chan_dongle']="Channel driver for Huawei UMTS/3G USB modems (dongles)"
+  
+  for module in "${AVILABLE_MODULES}";do
+    menulist="${menu_list} ${module} \"${module}\""
+    if grep -q -e '^noload => ${module}.so' /etc/asterisk/modules.conf; then
+      menulist="${menu_list} OFF"
+    else
+      menulist="${menu_list} ON"
+    fi
+  done
   
   MODULES=$(whiptail --title "${DEFAULT_TITLE}" --checklist \
     "What distro are you running?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
-    "chan_dongle" "Channel driver for Huawei UMTS/3G USB modems (dongles)" ${chan_dongle_state} \
+    $menu_list \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
