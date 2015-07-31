@@ -4,71 +4,171 @@
 #
 DEFAULT_TITLE='Raspberry Pi Software Configuration Tool (pbx-config)'
 
-conf_parser ()
-{
-    shopt -p extglob &> /dev/null
-    CHANGE_EXTGLOB=$?
-    if [ $CHANGE_EXTGLOB = 1 ]; then
-        shopt -s extglob
-    fi
-    ini="$(<$1)"                 # read the file
-    ini="${ini//[/\\[}"          # escape [
-    ini="${ini//]/\\]}"          # escape ]
-    IFS=$'\n' && ini=( ${ini} )  # convert to line-array
-    ini=( ${ini[*]//;*/} )       # remove comments with ;
-    ini=( ${ini[*]/#+([[:space:]])/} ) # remove init whitespace
-    ini=( ${ini[*]/*([[:space:]])=*([[:space:]])/=} ) # remove whitespace around =
-    ini=( ${ini[*]/#\\[/\}$'\n'"conf_section."} ) # set section prefix
-    ini=( ${ini[*]/%\\]/ \(} )   # convert text2function (1)
-    ini=( ${ini[*]/=/=\( } )     # convert item to array
-    ini=( ${ini[*]/%/ \)} )      # close array parenthesis
-    ini=( ${ini[*]/%\\ \)/ \\} ) # the multiline trick
-    ini=( ${ini[*]/%\( \)/\(\) \{} ) # convert text2function (2)
-    ini=( ${ini[*]/%\} \)/\}} )  # remove extra parenthesis
-    ini=( ${ini[*]/%\{/\{$'\n''conf_unset ${FUNCNAME/#'conf_section.'}'$'\n'} )  # clean previous definition of section 
-    ini[0]=""                    # remove first element
-    ini[${#ini[*]} + 1]='}'      # add the last brace
-    eval "$(echo "${ini[*]}")"   # eval the result
-    EVAL_STATUS=$?
-    if [ $CHANGE_EXTGLOB = 1 ]; then
-        shopt -u extglob
-    fi
-    return $EVAL_STATUS
+INI_PARSER_PREFIX="conf_section."
+
+function conf_parser {
+   shopt -p extglob &> /dev/null
+   CHANGE_EXTGLOB=$?
+   if [ $CHANGE_EXTGLOB = 1 ]
+   then
+      shopt -s extglob
+   fi
+   ini="$(<$1)"                 # read the file
+   ini="${ini//[/\\[}"          # escape [
+   ini="${ini//]/\\]}"          # escape ]
+   IFS=$'\n' && ini=( ${ini} )  # convert to line-array
+   ini=( ${ini[*]//;*/} )       # remove comments with ;
+   ini=( ${ini[*]/#+([[:space:]])/} ) # remove init whitespace
+   ini=( ${ini[*]/*([[:space:]])=*([[:space:]])/=} ) # remove whitespace around =
+   ini=( ${ini[*]/#\\[/\}$'\n'"$INI_PARSER_PREFIX"} ) # set section prefix
+   ini=( ${ini[*]/%\\]/ \(} )   # convert text2function (1)
+   ini=( ${ini[*]/=/=\( } )     # convert item to array
+   ini=( ${ini[*]/%/ \)} )      # close array parenthesis
+   ini=( ${ini[*]/%\\ \)/ \\} ) # the multiline trick
+   ini=( ${ini[*]/%\( \)/\(\) \{} ) # convert text2function (2)
+   ini=( ${ini[*]/%\} \)/\}} )  # remove extra parenthesis
+   ini=( ${ini[*]/%\{/\{$'\n''conf_unset ${FUNCNAME/#'$INI_PARSER_PREFIX'}'$'\n'} )  # clean previous definition of section 
+   ini[0]=""                    # remove first element
+   ini[${#ini[*]} + 1]='}'      # add the last brace
+   eval "$(echo "${ini[*]}")"   # eval the result
+   EVAL_STATUS=$?
+   if [ $CHANGE_EXTGLOB = 1 ]
+   then
+      shopt -u extglob
+   fi
+   return $EVAL_STATUS
 }
- 
-conf_unset {
-    SECTION=$1
-    OLDIFS="$IFS"
-    IFS=' '$'\n'
-    if [ -z "$SECTION" ]; then
-        fun="$(declare -F)"
-    else
-        fun="$(declare -F conf_section.$SECTION)"
-        if [ -z "$fun" ]; then
-            echo "section $SECTION not found" >2
-            return
-        fi
-    fi
-    fun="${fun//declare -f/}"
-    for f in $fun; do
-        [ "${f#conf_section.}" == "${f}" ] && continue
-        item="$(declare -f ${f})"
-        item="${item##*\{}" # remove function definition
-        item="${item##*FUNCNAME*conf_section.\};}" # remove clear section
-        item="${item/\}}"  # remove function close
-        item="${item%)*}" # remove everything after parenthesis
-        item="${item});" # add close parenthesis
-        vars=""
-        while [ "$item" != "" ]; do
-            newvar="${item%%=*}" # get item name
-            vars="$vars $newvar" # add name to collection
-            item="${item#*;}" # remove readed line
-        done
-        for var in $vars; do
-            unset $var
-        done
-    done
-    IFS="$OLDIFS"
+
+function conf_writer {
+   SECTION=$1
+   OLDIFS="$IFS"
+   IFS=' '$'\n'
+   if [ -z "$SECTION" ] 
+   then
+      fun="$(declare -F)"
+   else
+      fun="$(declare -F $INI_PARSER_PREFIX$SECTION)"
+      if [ -z "$fun" ]
+      then
+         echo "section $SECTION not found" >2
+         exit 1
+      fi
+   fi
+   fun="${fun//declare -f/}"
+   for f in $fun; do
+      [ "${f#$INI_PARSER_PREFIX}" == "${f}" ] && continue
+      item="$(declare -f ${f})"
+      item="${item##*\{}" # remove function definition
+      item="${item##*FUNCNAME*$INI_PARSER_PREFIX\};}" # remove clear section
+      item="${item/\}}"  # remove function close
+      item="${item%)*}" # remove everything after parenthesis
+      item="${item});" # add close parenthesis
+      vars=""
+      while [ "$item" != "" ]
+      do
+         newvar="${item%%=*}" # get item name
+         vars="$vars $newvar" # add name to collection
+         item="${item#*;}" # remove readed line
+      done
+      eval $f
+      echo "[${f#$INI_PARSER_PREFIX}]" # output section
+      for var in $vars; do
+         eval 'local length=${#'$var'[*]}' # test if var is an array
+         if [ $length == 1 ]
+         then
+            echo $var=\"${!var}\" #output var
+         else 
+            echo ";$var is an array" # add comment denoting var is an array
+            eval 'echo $var=\"${'$var'[*]}\"' # output array var
+         fi
+      done
+   done
+   IFS="$OLDIFS"
+}
+
+function conf_unset {
+   SECTION=$1
+   OLDIFS="$IFS"
+   IFS=' '$'\n'
+   if [ -z "$SECTION" ] 
+   then
+      fun="$(declare -F)"
+   else
+      fun="$(declare -F $INI_PARSER_PREFIX$SECTION)"
+      if [ -z "$fun" ]
+      then
+         echo "section $SECTION not found" >2
+         return
+      fi
+   fi
+   fun="${fun//declare -f/}"
+   for f in $fun; do
+      [ "${f#$INI_PARSER_PREFIX}" == "${f}" ] && continue
+      item="$(declare -f ${f})"
+      item="${item##*\{}" # remove function definition
+      item="${item##*FUNCNAME*$INI_PARSER_PREFIX\};}" # remove clear section
+      item="${item/\}}"  # remove function close
+      item="${item%)*}" # remove everything after parenthesis
+      item="${item});" # add close parenthesis
+      vars=""
+      while [ "$item" != "" ]
+      do
+         newvar="${item%%=*}" # get item name
+         vars="$vars $newvar" # add name to collection
+         item="${item#*;}" # remove readed line
+      done
+      for var in $vars; do
+         unset $var
+      done
+   done
+   IFS="$OLDIFS"
+}
+
+function conf_clear {
+   SECTION=$1
+   OLDIFS="$IFS"
+   IFS=' '$'\n'
+   if [ -z "$SECTION" ] 
+   then
+      fun="$(declare -F)"
+   else
+      fun="$(declare -F $INI_PARSER_PREFIX$SECTION)"
+      if [ -z "$fun" ]
+      then
+         echo "section $SECTION not found" >2
+         exit 1
+      fi
+   fi
+   fun="${fun//declare -f/}"
+   for f in $fun; do
+      [ "${f#$INI_PARSER_PREFIX}" == "${f}" ] && continue
+      unset -f ${f}
+   done
+   IFS="$OLDIFS"
+}
+
+function conf_update {
+   SECTION=$1
+   VAR=$2
+   OLDIFS="$IFS"
+   IFS=' '$'\n'
+   fun="$(declare -F $INI_PARSER_PREFIX$SECTION)"
+   if [ -z "$fun" ]
+   then
+      echo "section $SECTION not found" >2
+      exit 1
+   fi
+   fun="${fun//declare -f/}"
+   item="$(declare -f ${fun})"
+   #item="${item##* $VAR=*}" # remove var declaration
+   item="${item/\}}"  # remove function close
+   item="${item}
+    $VAR=(${!VAR})
+   "
+   item="${item}
+   }" # close function again
+   
+   eval "function $item" 
 }
 
 calc_wt_size() {
