@@ -85,28 +85,33 @@ do_modules_menu()
     "What distro are you running?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
     "chan_dongle" "Channel driver for Huawei UMTS/3G USB modems (dongles)" ${chan_dongle_state} \
     3>&1 1>&2 2>&3)
-  
-  # Disable all available modules
-  for module in "${AVAILABLE_MODULES[@]}"
-  do
-    MODULE_IS_ACTIVE=0
+  RET=$?
+  if [ $RET -eq 1 ]; then
+    return 0
+  elif [$RET -eq 0 ]; then
+    MODULES=($(echo ${MODULES} | tr -d '"'))
     
-    for e in "${MODULES[@]}"
+    for module in "${AVAILABLE_MODULES[@]}"
     do
-      if [[ "$module" == "$e" ]]; then
-        MODULE_IS_ACTIVE=1
-        break;
+      MODULE_IS_ACTIVE=0
+    
+      for e in "${MODULES[@]}"
+      do
+        if [[ "$module" == "$e" ]]; then
+          MODULE_IS_ACTIVE=1
+          break;
+        fi
+      done
+    
+      if [ ${MODULE_IS_ACTIVE} -eq 1 ]; then
+        sed -e "s|^noload => ${module}.so|load => ${module}.so|" -i /etc/asterisk/modules.conf
+        grep -q -e "^load => ${module}.so" /etc/asterisk/modules.conf || echo "load => ${module}.so" >> /etc/asterisk/modules.conf
+      else
+        sed -e "s|^load => ${module}.so|noload => ${module}.so|" -i /etc/asterisk/modules.conf
+        grep -q -e "^noload => ${module}.so" /etc/asterisk/modules.conf || echo "noload => ${module}.so" >> /etc/asterisk/modules.conf
       fi
     done
-    
-    if [ ${MODULE_IS_ACTIVE} -eq 1 ]; then
-      sed -e "s|^noload => ${module}.so|load => ${module}.so|" -i /etc/asterisk/modules.conf
-      grep -q -e "^load => ${module}.so" /etc/asterisk/modules.conf || echo "load => ${module}.so" >> /etc/asterisk/modules.conf
-    else
-      sed -e "s|^load => ${module}.so|noload => ${module}.so|" -i /etc/asterisk/modules.conf
-      grep -q -e "^noload => ${module}.so" /etc/asterisk/modules.conf || echo "noload => ${module}.so" >> /etc/asterisk/modules.conf
-    fi
-  done
+  fi
 }
 
 #
