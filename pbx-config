@@ -71,26 +71,21 @@ do_chan_dongle() {
 }
 
 do_modules_menu()
-{
-  local AVAILABLE_MODULES=("chan_dongle")
-  declare -a AVAILABLE_MODULES_DESCRIPTION
-  local MODULE_IS_ACTIVE=1
-  local menu_list=''
-  
-  AVAILABLE_MODULES_DESCRIPTION['chan_dongle']="Channel driver for Huawei UMTS/3G USB modems (dongles)"
-  
-  for module in "${AVILABLE_MODULES}";do
-    menulist="${menu_list} ${module} \"${module}\""
-    if grep -q -e '^noload => ${module}.so' /etc/asterisk/modules.conf; then
-      menulist="${menu_list} OFF"
-    else
-      menulist="${menu_list} ON"
-    fi
+  local module=''
+  local AVAILABLE_MODULES=(
+    chan_dongle "Channel driver for Huawei uMTS/3G USB modems" ON
+    chan_gtalk  "Channel for Google Talk"                      ON
+  )
+
+  # Check if the module is active or not
+  for ((i=0; i<${#AVAILABLE_MODULES[@]}; i+=3)); do
+    module=${AVAILABLE_MODULES[$i]}
+    grep -q -e "^noload => ${module}.so" /etc/asterisk/modules.conf && AVAILABLE_MODULES[$(expr $i + 2)]=OFF
   done
-  
+
   MODULES=$(whiptail --title "${DEFAULT_TITLE}" --checklist \
-    "What distro are you running?" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
-    $menu_list \
+    "Select the asterisk modules you wish to load" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
+    "${AVAILABLE_MODULES[@]}" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -98,19 +93,19 @@ do_modules_menu()
   elif [$RET -eq 0 ]; then
     MODULES=($(echo ${MODULES} | tr -d '"'))
     
-    for module in "${AVAILABLE_MODULES[@]}"
-    do
-      MODULE_IS_ACTIVE=0
-    
+    for ((i=0; i<${#AVAILABLE_MODULES[@]}; i+=3)); do
+      module=${AVAILABLE_MODULES[$i]}
+      active_module=0
+      
       for e in "${MODULES[@]}"
       do
         if [[ "$module" == "$e" ]]; then
-          MODULE_IS_ACTIVE=1
+          active_module=1
           break;
         fi
       done
-    
-      if [ ${MODULE_IS_ACTIVE} -eq 1 ]; then
+      
+      if [ ${active_module} -eq 1 ]; then
         sed -e "s|^noload => ${module}.so|load => ${module}.so|" -i /etc/asterisk/modules.conf
         grep -q -e "^load => ${module}.so" /etc/asterisk/modules.conf || echo "load => ${module}.so" >> /etc/asterisk/modules.conf
       else
