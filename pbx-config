@@ -33,43 +33,6 @@ do_finish() {
   exit 0
 }
 
-do_chan_dongle_set_number()
-{
-  CURRENT_HOSTNAME=`cat /etc/hostname | tr -d " \t\n\r"`
-  NEW_HOSTNAME=$(whiptail --inputbox "Please enter a hostname" 20 60 "$CURRENT_HOSTNAME" 3>&1 1>&2 2>&3)
-  if [ $? -eq 0 ]; then
-    echo $NEW_HOSTNAME > /etc/hostname
-    sed -i '/^\[dongle0\]$/,/^\[/ s/^enabled = false/enabled = true/' /etc/fail2ban/jail.conf
-    sed -i "s/127.0.1.1.*$CURRENT_HOSTNAME/127.0.1.1\t$NEW_HOSTNAME/g" /etc/hosts
-    ASK_TO_REBOOT=1
-  fi
-}
-
-do_chan_dongle() {
-  whiptail --yesno "Would you like the chan_dongle module enabled or disabled?" 20 60 2 \
-    --yes-button Enable --no-button Disable
-  RET=$?
-  if [ $RET -eq 0 ]; then
-    # Backup the file
-    if [ ! -f /etc/asterisk/dongle.conf.orig ]; then
-      cp /etc/asterisk/dongle.conf /etc/asterisk/dongle.con.orig
-    fi
-    
-    do_chan_dongle_set_number
-    
-    # Enable the module
-    sed -e 's|^noload => chan_dongle.so|load => chan_dongle.so|' -i /etc/asterisk/modules.conf
-    grep -q -e '^load => chan_dongle.so' /etc/asterisk/modules.conf || echo "load => chan_dongle.so" >> /etc/asterisk/modules.conf
-    whiptail --msgbox "chan_dongle module enabled" 20 60 1
-  elif [ $RET -eq 1 ]; then
-    sed -e 's|^load => chan_dongle.so|noload => chan_dongle.so|' -i /etc/asterisk/modules.conf
-    grep -q -e '^noload => chan_dongle.so' /etc/asterisk/modules.conf || echo "noload => chan_dongle.so" >> /etc/asterisk/modules.conf
-    whiptail --msgbox "chan_dongle module disabled" 20 60 1
-  else
-    return $RET
-  fi
-}
-
 do_modules_menu()
 {
   local module=''
@@ -114,7 +77,19 @@ do_modules_menu()
         grep -q -e "^noload => ${module}.so" /etc/asterisk/modules.conf || echo "noload => ${module}.so" >> /etc/asterisk/modules.conf
       fi
     done
+    
+    # Post module configuration
+    for module in "${MODULES[@]}"; do
+      case "${module}" in
+        chan_dongle) do_chan_dongle_menu ;;
+      esac
+    done
   fi
+}
+
+do_chan_dongle_menu()
+{
+  whiptail --msgbox "chan_dongle setup" 20 60 1
 }
 
 #
