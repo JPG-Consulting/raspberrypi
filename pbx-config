@@ -25,7 +25,7 @@ conf_parser ()
     ini=( ${ini[*]/%\\ \)/ \\} ) # the multiline trick
     ini=( ${ini[*]/%\( \)/\(\) \{} ) # convert text2function (2)
     ini=( ${ini[*]/%\} \)/\}} )  # remove extra parenthesis
-    ini=( ${ini[*]/%\{/\{$'\n''cfg_unset ${FUNCNAME/#'conf_section.'}'$'\n'} )  # clean previous definition of section 
+    ini=( ${ini[*]/%\{/\{$'\n''conf_unset ${FUNCNAME/#'conf_section.'}'$'\n'} )  # clean previous definition of section 
     ini[0]=""                    # remove first element
     ini[${#ini[*]} + 1]='}'      # add the last brace
     eval "$(echo "${ini[*]}")"   # eval the result
@@ -36,24 +36,39 @@ conf_parser ()
     return $EVAL_STATUS
 }
  
-conf_writer ()
-{
+conf_unset {
+    SECTION=$1
+    OLDIFS="$IFS"
     IFS=' '$'\n'
-    fun="$(declare -F)"
+    if [ -z "$SECTION" ]; then
+        fun="$(declare -F)"
+    else
+        fun="$(declare -F conf_section.$SECTION)"
+        if [ -z "$fun" ]; then
+            echo "section $SECTION not found" >2
+            return
+        fi
+    fi
     fun="${fun//declare -f/}"
     for f in $fun; do
-        [ "${f#cfg.section}" == "${f}" ] && continue
+        [ "${f#conf_section.}" == "${f}" ] && continue
         item="$(declare -f ${f})"
-        item="${item##*\{}"
-        item="${item%\}}"
-        item="${item//=*;/}"
-        vars="${item//=*/}"
-        eval $f
-        echo "[${f#cfg.section.}]"
+        item="${item##*\{}" # remove function definition
+        item="${item##*FUNCNAME*conf_section.\};}" # remove clear section
+        item="${item/\}}"  # remove function close
+        item="${item%)*}" # remove everything after parenthesis
+        item="${item});" # add close parenthesis
+        vars=""
+        while [ "$item" != "" ]; do
+            newvar="${item%%=*}" # get item name
+            vars="$vars $newvar" # add name to collection
+            item="${item#*;}" # remove readed line
+        done
         for var in $vars; do
-            echo $var=\"${!var}\"
+            unset $var
         done
     done
+    IFS="$OLDIFS"
 }
 
 calc_wt_size() {
