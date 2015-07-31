@@ -6,24 +6,34 @@ DEFAULT_TITLE='Raspberry Pi Software Configuration Tool (pbx-config)'
 
 conf_parser ()
 {
-    ini="$(<$1)"                # read the file
-    ini="${ini//[/\[}"          # escape [
-    ini="${ini//]/\]}"          # escape ]
-    IFS=$'\n' && ini=( ${ini} ) # convert to line-array
-    ini=( ${ini[*]//;*/} )      # remove comments with ;
-    ini=( ${ini[*]/\    =/=} )  # remove tabs before =
-    ini=( ${ini[*]/=\   /=} )   # remove tabs be =
-    ini=( ${ini[*]/\ =\ /=} )   # remove anything with a space around =
-    ini=( ${ini[*]/#\\[/\}$'\n'conf_section.} ) # set section prefix
-    ini=( ${ini[*]/%\\]/ \(} )    # convert text2function (1)
-    ini=( ${ini[*]/=/=\( } )    # convert item to array
-    ini=( ${ini[*]/%/ \)} )     # close array parenthesis
+    shopt -p extglob &> /dev/null
+    CHANGE_EXTGLOB=$?
+    if [ $CHANGE_EXTGLOB = 1 ]; then
+        shopt -s extglob
+    fi
+    ini="$(<$1)"                 # read the file
+    ini="${ini//[/\\[}"          # escape [
+    ini="${ini//]/\\]}"          # escape ]
+    IFS=$'\n' && ini=( ${ini} )  # convert to line-array
+    ini=( ${ini[*]//;*/} )       # remove comments with ;
+    ini=( ${ini[*]/#+([[:space:]])/} ) # remove init whitespace
+    ini=( ${ini[*]/*([[:space:]])=*([[:space:]])/=} ) # remove whitespace around =
+    ini=( ${ini[*]/#\\[/\}$'\n'"conf_section."} ) # set section prefix
+    ini=( ${ini[*]/%\\]/ \(} )   # convert text2function (1)
+    ini=( ${ini[*]/=/=\( } )     # convert item to array
+    ini=( ${ini[*]/%/ \)} )      # close array parenthesis
     ini=( ${ini[*]/%\\ \)/ \\} ) # the multiline trick
     ini=( ${ini[*]/%\( \)/\(\) \{} ) # convert text2function (2)
-    ini=( ${ini[*]/%\} \)/\}} ) # remove extra parenthesis
-    ini[0]="" # remove first element
-    ini[${#ini[*]} + 1]='}'    # add the last brace
-    eval "$(echo "${ini[*]}")" # eval the result
+    ini=( ${ini[*]/%\} \)/\}} )  # remove extra parenthesis
+    ini=( ${ini[*]/%\{/\{$'\n''cfg_unset ${FUNCNAME/#'conf_section.'}'$'\n'} )  # clean previous definition of section 
+    ini[0]=""                    # remove first element
+    ini[${#ini[*]} + 1]='}'      # add the last brace
+    eval "$(echo "${ini[*]}")"   # eval the result
+    EVAL_STATUS=$?
+    if [ $CHANGE_EXTGLOB = 1 ]; then
+        shopt -u extglob
+    fi
+    return $EVAL_STATUS
 }
  
 conf_writer ()
