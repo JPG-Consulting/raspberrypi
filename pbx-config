@@ -1,95 +1,136 @@
 #!/bin/bash
-
+# Bash INI Parser:
+#    http://theoldschooldevops.com/2008/02/09/bash-ini-parser/
+#
 DEFAULT_TITLE='Raspberry Pi Software Configuration Tool (pbx-config)'
 
-calc_wt_size() {
-  # NOTE: it's tempting to redirect stderr to /dev/null, so supress error 
-  # output from tput. However in this case, tput detects neither stdout or 
-  # stderr is a tty and so only gives default 80, 24 values
-  WT_HEIGHT=17
-  WT_WIDTH=$(tput cols)
-
-  if [ -z "$WT_WIDTH" ] || [ "$WT_WIDTH" -lt 60 ]; then
-    WT_WIDTH=80
-  fi
-  if [ "$WT_WIDTH" -gt 178 ]; then
-    WT_WIDTH=120
-  fi
-  WT_MENU_HEIGHT=$(($WT_HEIGHT-7))
+conf_parser ()
+{
+    ini="$(<$1)"                # read the file
+    ini="${ini//[/\[}"          # escape [
+    ini="${ini//]/\]}"          # escape ]
+    IFS=$'\n' && ini=( ${ini} ) # convert to line-array
+    ini=( ${ini[*]//;*/} )      # remove comments with ;
+    ini=( ${ini[*]/\    =/=} )  # remove tabs before =
+    ini=( ${ini[*]/=\   /=} )   # remove tabs be =
+    ini=( ${ini[*]/\ =\ /=} )   # remove anything with a space around =
+    ini=( ${ini[*]/#\\[/\}$'\n'conf_section.} ) # set section prefix
+    ini=( ${ini[*]/%\\]/ \(} )    # convert text2function (1)
+    ini=( ${ini[*]/=/=\( } )    # convert item to array
+    ini=( ${ini[*]/%/ \)} )     # close array parenthesis
+    ini=( ${ini[*]/%\\ \)/ \\} ) # the multiline trick
+    ini=( ${ini[*]/%\( \)/\(\) \{} ) # convert text2function (2)
+    ini=( ${ini[*]/%\} \)/\}} ) # remove extra parenthesis
+    ini[0]="" # remove first element
+    ini[${#ini[*]} + 1]='}'    # add the last brace
+    eval "$(echo "${ini[*]}")" # eval the result
+}
+ 
+conf_writer ()
+{
+    IFS=' '$'\n'
+    fun="$(declare -F)"
+    fun="${fun//declare -f/}"
+    for f in $fun; do
+        [ "${f#cfg.section}" == "${f}" ] && continue
+        item="$(declare -f ${f})"
+        item="${item##*\{}"
+        item="${item%\}}"
+        item="${item//=*;/}"
+        vars="${item//=*/}"
+        eval $f
+        echo "[${f#cfg.section.}]"
+        for var in $vars; do
+            echo $var=\"${!var}\"
+        done
+    done
 }
 
-array_contains_element () {
-  local e
-  for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
-  return 1
+calc_wt_size() {
+    # NOTE: it's tempting to redirect stderr to /dev/null, so supress error 
+    # output from tput. However in this case, tput detects neither stdout or 
+    # stderr is a tty and so only gives default 80, 24 values
+    WT_HEIGHT=17
+    WT_WIDTH=$(tput cols)
+
+    if [ -z "$WT_WIDTH" ] || [ "$WT_WIDTH" -lt 60 ]; then
+        WT_WIDTH=80
+    fi
+    if [ "$WT_WIDTH" -gt 178 ]; then
+        WT_WIDTH=120
+    fi
+    WT_MENU_HEIGHT=$(($WT_HEIGHT-7))
 }
 
 do_finish() {
-  whiptail --yesno "Would you like to restart Asterisk now?" 20 60 2
-  if [ $? -eq 0 ]; then # yes
-    sync
-    service asterisk restart
-  fi
-  exit 0
+    whiptail --yesno "Would you like to restart Asterisk now?" 20 60 2
+    if [ $? -eq 0 ]; then # yes
+        sync
+        service asterisk restart
+    fi
+    exit 0
 }
 
 do_modules_menu()
 {
-  local module=''
-  local AVAILABLE_MODULES=(
-    chan_dongle "Channel driver for Huawei uMTS/3G USB modems" ON
-    chan_gtalk  "Channel for Google Talk"                      ON
-  )
+    local module=''
+    local AVAILABLE_MODULES=(
+        chan_dongle "Channel driver for Huawei uMTS/3G USB modems" ON
+    )
 
-  # Check if the module is active or not
-  for ((i=0; i<${#AVAILABLE_MODULES[@]}; i+=3)); do
-    module=${AVAILABLE_MODULES[$i]}
-    grep -q -e "^noload => ${module}.so" /etc/asterisk/modules.conf && AVAILABLE_MODULES[$(expr $i + 2)]=OFF
-  done
-
-  MODULES=$(whiptail --title "${DEFAULT_TITLE}" --checklist \
-    "Select the asterisk modules you wish to load" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
-    "${AVAILABLE_MODULES[@]}" \
-    3>&1 1>&2 2>&3)
-  RET=$?
-  if [ $RET -eq 1 ]; then
-    return 0
-  elif [ $RET -eq 0 ]; then
-    MODULES=($(echo ${MODULES} | tr -d '"'))
-    
+    # Check if the module is active or not
     for ((i=0; i<${#AVAILABLE_MODULES[@]}; i+=3)); do
-      module=${AVAILABLE_MODULES[$i]}
-      active_module=0
-      
-      for e in "${MODULES[@]}"
-      do
-        if [[ "$module" == "$e" ]]; then
-          active_module=1
-          break;
-        fi
-      done
-      
-      if [ ${active_module} -eq 1 ]; then
-        sed -e "s|^noload => ${module}.so|load => ${module}.so|" -i /etc/asterisk/modules.conf
-        grep -q -e "^load => ${module}.so" /etc/asterisk/modules.conf || echo "load => ${module}.so" >> /etc/asterisk/modules.conf
-      else
-        sed -e "s|^load => ${module}.so|noload => ${module}.so|" -i /etc/asterisk/modules.conf
-        grep -q -e "^noload => ${module}.so" /etc/asterisk/modules.conf || echo "noload => ${module}.so" >> /etc/asterisk/modules.conf
-      fi
+        module=${AVAILABLE_MODULES[$i]}
+        grep -q -e "^noload => ${module}.so" /etc/asterisk/modules.conf && AVAILABLE_MODULES[$(expr $i + 2)]=OFF
     done
+
+    MODULES=$(whiptail --title "${DEFAULT_TITLE}" --checklist \
+        "Select the asterisk modules you wish to load" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
+        "${AVAILABLE_MODULES[@]}" \
+        3>&1 1>&2 2>&3)
+    RET=$?
+    if [ $RET -eq 1 ]; then
+        return 0
+    elif [ $RET -eq 0 ]; then
+        MODULES=($(echo ${MODULES} | tr -d '"'))
     
-    # Post module configuration
-    for module in "${MODULES[@]}"; do
-      case "${module}" in
-        chan_dongle) do_chan_dongle_menu ;;
-      esac
-    done
-  fi
+        for ((i=0; i<${#AVAILABLE_MODULES[@]}; i+=3)); do
+            module=${AVAILABLE_MODULES[$i]}
+            active_module=0
+      
+            for e in "${MODULES[@]}"
+            do
+                if [[ "$module" == "$e" ]]; then
+                    active_module=1
+                    break;
+                fi
+            done
+      
+            if [ ${active_module} -eq 1 ]; then
+                sed -e "s|^noload => ${module}.so|load => ${module}.so|" -i /etc/asterisk/modules.conf
+                grep -q -e "^load => ${module}.so" /etc/asterisk/modules.conf || echo "load => ${module}.so" >> /etc/asterisk/modules.conf
+            else
+                sed -e "s|^load => ${module}.so|noload => ${module}.so|" -i /etc/asterisk/modules.conf
+                grep -q -e "^noload => ${module}.so" /etc/asterisk/modules.conf || echo "noload => ${module}.so" >> /etc/asterisk/modules.conf
+            fi
+        done
+    
+        # Post module configuration
+        for module in "${MODULES[@]}"; do
+            case "${module}" in
+                chan_dongle) do_chan_dongle_menu ;;
+            esac
+        done
+    fi
 }
 
 do_chan_dongle_menu()
 {
-  whiptail --msgbox "chan_dongle setup" 20 60 1
+    conf_parser /etc/asterisk/dongle.conf
+    conf_section.dongle0
+    echo "imei value is \"$imei\""
+    exit 1
+    whiptail --msgbox "chan_dongle setup" 20 60 1
 }
 
 #
@@ -97,18 +138,18 @@ do_chan_dongle_menu()
 #
 calc_wt_size
 while true; do
-  FUN=$(whiptail --title "${DEFAULT_TITLE}" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-    "1 Module Options" "Configure Asterisk modules" \
-    3>&1 1>&2 2>&3)
-  RET=$?
-  if [ $RET -eq 1 ]; then
-    do_finish
-  elif [ $RET -eq 0 ]; then
-    case "$FUN" in
-      1\ *) do_modules_menu ;;
-      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
-  else
-    exit 1
-  fi
+    FUN=$(whiptail --title "${DEFAULT_TITLE}" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
+        "1 Module Options" "Configure Asterisk modules" \
+        3>&1 1>&2 2>&3)
+    RET=$?
+    if [ $RET -eq 1 ]; then
+        do_finish
+    elif [ $RET -eq 0 ]; then
+        case "$FUN" in
+            1\ *) do_modules_menu ;;
+            *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+        esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+    else
+        exit 1
+    fi
 done
