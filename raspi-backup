@@ -4,7 +4,7 @@ IMAGE_FREESPACE=64
 DISTRIB_ID='raspbian'
 DISTRIB_CODENAME='wheezy'
 MOUNT_PATH=/backup
-RSYNC_OPTIONS='-aDH --force --partial --numeric-ids'
+RSYNC_OPTIONS='--force -rltWDEgopt'
 
 function delete_mount()
 {
@@ -225,6 +225,35 @@ function create_image()
     delete_lo
 }
 
+function enable_raspi_config_at_boot()
+{
+    if [ -e ${MOUNT_PATH}/etc/profile.d/raspi-config.sh ]; then
+        echo "/etc/profile.d/raspi-config.sh exists, so assuming config at boot enabled"
+        return 0
+    fi
+    
+    echo "#!/bin/sh" > ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "# Part of raspi-config http://github.com/asb/raspi-config" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "#" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "# See LICENSE file for copyright and license details" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "# Should be installed to /etc/profile.d/raspi-config.sh to force raspi-config" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "# to run at initial login" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "# You may also want to set automatic login in /etc/inittab on tty1 by adding a" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "# line such as:" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "# 1:2345:respawn:/bin/login -f root tty1 </dev/tty1 >/dev/tty1 2>&1 # RPICFG_TO_DISABLE" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "if [ $(id -u) -ne 0 ]; then" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "  printf \"\nNOTICE: the software on this Raspberry Pi has not been fully configured. Please run 'sudo raspi-config'\n\n\"" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "else" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "  raspi-config" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "  exec login -f pi" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "fi" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    
+    telinit q
+}
+
 function do_backup()
 {
     if [ ! -f $IMAGE_FILE ]; then
@@ -276,25 +305,7 @@ function do_backup()
         exit 1
     fi
     
-    # Launch raspi-config on login
-    if [ -d ${MOUNT_PATH}/home/pi ]; then
-        if [ ! -f ${MOUNT_PATH}/home/pi/.bash_profile ]; then
-            echo "rm -f /home/pi/.bash_profile" > ${MOUNT_PATH}/home/pi/.bash_profile
-            echo "sudo raspi-config" >> ${MOUNT_PATH}/home/pi/.bash_profile
-            
-            chown pi:pi ${MOUNT_PATH}/home/pi/.bash_profile
-            chmod 0644 ${MOUNT_PATH}/home/pi/.bash_profile
-        else
-            echo "/home/pi/.backup_postinstall" >> ${MOUNT_PATH}/home/pi/.bash_profile
-            
-            echo "sed -i '$d' /home/pi/.bash_profile" > ${MOUNT_PATH}/home/pi/.backup_postinstall
-            echo "rm -f /home/pi/.backup_postinstall" >> ${MOUNT_PATH}/home/pi/.backup_postinstall
-            echo "sudo raspi-config" >> ${MOUNT_PATH}/home/pi/.bash_profile
-            
-            chown pi ${MOUNT_PATH}/home/pi/.backup_postinstall
-            chmod 0644 ${MOUNT_PATH}/home/pi/.backup_postinstall
-        fi
-    fi
+    enable_raspi_config_at_boot
     
     unmount_image
     delete_lo
