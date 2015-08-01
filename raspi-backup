@@ -244,7 +244,7 @@ function enable_raspi_config_at_boot()
     echo "# line such as:" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
     echo "# 1:2345:respawn:/bin/login -f root tty1 </dev/tty1 >/dev/tty1 2>&1 # RPICFG_TO_DISABLE" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
     echo "" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
-    echo "if [ $(id -u) -ne 0 ]; then" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "if [ \$(id -u) -ne 0 ]; then" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
     echo "  printf \"\nNOTICE: the software on this Raspberry Pi has not been fully configured. Please run 'sudo raspi-config'\n\n\"" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
     echo "else" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
     echo "  raspi-config" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
