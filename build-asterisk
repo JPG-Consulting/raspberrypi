@@ -1,0 +1,54 @@
+#!/bin/bash
+# https://wiki.asterisk.org/wiki/display/AST/System+Libraries
+
+VERSION="11.6-cert11"
+SOURCE="http://downloads.asterisk.org/pub/telephony/certified-asterisk/releases/certified-asterisk-${VERSION}.tar.gz"
+
+
+# Get Asterisk sources
+do_download_asterisk()
+{
+    cd /usr/src
+    wget ${SOURCE}
+    tar -zxf certified-asterisk-${VERSION}.tar.gz
+    rm certified-asterisk-${VERSION}.tar.gz
+    mv certified-asterisk-${VERSION} asterisk-${VERSION}
+}
+
+# Build Asterisk
+do_build_asterisk()
+{
+    cd /usr/src/asterisk-${VERSION}
+    
+    ./configure --disable-xmldoc
+    make
+    #make install
+    #checkinstall -D --install=no --pkgversion=${VERSION} \
+    #    --requires="libc6, libcap2, libedit2, libgcc1, libpopt0, libsqlite3-0, libssl1.0.0, libstdc++6, libtinfo5, libxml2, libiksemel3, sox"
+
+    #make samples
+    #make config
+}
+
+do_set_permissions()
+{
+    adduser asterisk --disabled-password --home=/var/lib/asterisk --no-create-home --gecos "asterisk PBX user"
+    #adduser www-data asterisk
+
+    #MODIFYING ASTERISK
+    ln -s /var/lib/asterisk/moh /var/lib/asterisk/mohmp3   
+    cp /etc/asterisk/asterisk.conf /etc/asterisk/asterisk.conf.`date +%Y.%m.%d.%Hh.%mm`
+    sed -i "s/\(astrundir *=> *\)\(.*\)/\1\/var\/run\/asterisk/" /etc/asterisk/asterisk.conf
+    sed -i '1 {s/\<sh\>/bash/}' /usr/sbin/safe_asterisk
+    sed -i "s,SAFE_AST_BACKGROUND=0,SAFE_AST_BACKGROUND=1," /usr/sbin/safe_asterisk
+    chown asterisk:asterisk -R /var/run/asterisk
+    chown asterisk:asterisk -R /etc/asterisk
+    chown asterisk:asterisk -R /var/lib/asterisk
+    chown asterisk:asterisk -R /var/log/asterisk
+    chown asterisk:asterisk -R /var/spool/asterisk
+    chmod 770 /etc/asterisk/
+    chmod 770 /var/lib/asterisk/
+}
+
+do_download_asterisk
+do_build_asterisk
