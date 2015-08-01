@@ -1,22 +1,24 @@
 #!/bin/bash
 # https://wiki.asterisk.org/wiki/display/AST/System+Libraries
 
-VERSION="11.6-cert11"
-SOURCE="http://downloads.asterisk.org/pub/telephony/certified-asterisk/releases/certified-asterisk-${VERSION}.tar.gz"
-
 do_install_build_dependencies()
 {
-    apt-get install -y build-essential libsqlite3-dev libxml2-dev uuid-dev libncurses5-dev libncursesw5-dev libiksemel-dev libssl-dev libeditline-dev libedit-dev curl libcurl4-gnutls-dev
+    # autoconf needed for bootstrap.sh
+    apt-get install -y build-essential autoconf libsqlite3-dev libxml2-dev uuid-dev libncurses5-dev libncursesw5-dev libiksemel-dev libssl-dev libeditline-dev libedit-dev curl libcurl4-gnutls-dev
+    apt-get install -y -qq git-core
 }
 
 # Get Asterisk sources
 do_download_asterisk()
 {
     cd /usr/src
-    wget ${SOURCE}
-    tar -zxf certified-asterisk-${VERSION}.tar.gz
-    rm certified-asterisk-${VERSION}.tar.gz
-    mv certified-asterisk-${VERSION} asterisk-${VERSION}
+    wget http://downloads.asterisk.org/pub/telephony/certified-asterisk/certified-asterisk-11.6-cert11.tar.gz
+    tar -zxf certified-asterisk-11.6-cert11.tar.gz
+    rm certified-asterisk-11.6-cert11.tar.gz
+    mv certified-asterisk-11.6-cert11 asterisk-11.6-cert11
+    cd /usr/src/asterisk-11.6-cert11
+    #./contrib/scripts/install_prereq install
+    ./bootstrap.sh
 }
 
 # Build Asterisk
@@ -25,10 +27,11 @@ do_build_asterisk()
     cd /usr/src/asterisk-${VERSION}
     
     ./configure --disable-xmldoc
+    make menuselect
     make
-    #make install
+    make install
     #checkinstall -D --install=no --pkgversion=${VERSION} \
-    #    --requires="libc6, libcap2, libedit2, libgcc1, libpopt0, libsqlite3-0, libssl1.0.0, libstdc++6, libtinfo5, libxml2, libiksemel3, sox"
+    #    --requires="libc6, libcap2, libedit2, libgcc1, libpopt0, libsqlite3-0, libssl1.0.0, libstdc++6, libtinfo5, libxml2, libiksemel3, sox, uuid"
 
     #make samples
     #make config
