@@ -1,0 +1,346 @@
+#!/bin/bash
+BACKUP_PATH=''
+IMAGE_FREESPACE=64
+DISTRIB_ID='raspbian'
+DISTRIB_CODENAME='wheezy'
+MOUNT_PATH=/backup
+RSYNC_OPTIONS='--force -rltWDEgopt'
+
+function delete_mount()
+{
+    if [ -d /backup ]; then
+        if [ "${MOUNT_PATH}" == "/backup" ]; then
+            rm -rf /backup
+        fi
+    fi   
+}
+
+function delete_lo()
+{
+    partx -d ${IMAGE_LOOP}p1
+    if [ $? -ne 0 ]; then
+        echo "Failed to delete loop device boot partition."
+        partx -d ${IMAGE_LOOP}p2
+        losetup -d ${IMAGE_LOOP}
+        delete_mount
+        exit 1
+    fi
+    
+    partx -d ${IMAGE_LOOP}p2
+    if [ $? -ne 0 ]; then
+        echo "Failed to delete loop device root partition."
+        losetup -d ${IMAGE_LOOP}    
+        delete_mount
+        exit 1
+    fi
+    
+    losetup -d ${IMAGE_LOOP}
+    if [ $? -ne 0 ]; then
+        echo "Failed to delete loop device."
+        delete_mount
+        exit 1
+    fi
+}
+
+function setup_lo()
+{
+    IMAGE_LOOP=$(losetup -f)
+    if [ -z "${IMAGE_LOOP}" ]; then
+        echo "Error setting up loop device."
+        delete_mount
+        exit 1
+    fi
+    
+    losetup -f $IMAGE_FILE
+    if [ $? -ne 0 ]; then
+        echo "Failed to create loop device."
+        delete_mount
+        exit 1
+    fi
+    
+    partx -a ${IMAGE_LOOP}
+    if [ $? -ne 0 ]; then
+        echo "Failed to create loop device for partitions."
+        delete_mount
+        exit 1
+    fi
+}
+
+function mount_image()
+{
+    if [ ! -d ${MOUNT_PATH} ]; then
+        mkdir -p ${MOUNT_PATH}
+    fi
+    
+    mount ${IMAGE_LOOP}p2 ${MOUNT_PATH}
+    if [ $? -ne 0 ]; then
+        echo "Error mounting root partition"
+        delete_lo
+        delete_mount
+        exit 1
+    fi
+    
+    if [ ! -d ${MOUNT_PATH}/boot ]; then
+        mkdir -p ${MOUNT_PATH}/boot
+    fi
+    
+    mount ${IMAGE_LOOP}p1 ${MOUNT_PATH}/boot
+    if [ $? -ne 0 ]; then
+        echo "Error mounting boot partition"
+        umount -l ${MOUNT_PATH}
+        delete_lo
+        delete_mount
+        exit 1
+    fi
+}
+
+function unmount_image()
+{
+    umount ${MOUNT_PATH}/boot
+    if [ $? -ne 0 ]; then
+        echo "Error unmounting boot partition."
+        umount -l ${MOUNT_PATH}/boot
+        umount -l ${MOUNT_PATH}
+        delete_lo
+        delete_mount
+        exit 1
+    fi
+    
+    umount ${MOUNT_PATH}
+    if [ $? -ne 0 ]; then
+        echo "Error unmounting root partition."
+        umount -l ${MOUNT_PATH}
+        delete_lo
+        delete_mount
+        exit 1
+    fi
+}
+
+function create_image()
+{
+    local bootfs_start=$(parted /dev/mmcblk0 -ms unit s p | grep "^1" | cut -f 2 -d:)
+    if [ -z ${bootfs_start} ]; then
+        echo "Unable to get boot partition start offset."
+        delete_mount
+        exit 1
+    fi
+    
+    local bootfs_end=$(parted /dev/mmcblk0 -ms unit s p | grep "^1" | cut -f 3 -d:)
+    if [ -z ${bootfs_end} ]; then
+        echo "Unable to get boot partition end offset."
+        exit 1
+    fi
+    
+    local rootfs_start=$(parted /dev/mmcblk0 -ms unit s p | grep "^2" | cut -f 2 -d:)
+    if [ -z ${rootfs_start} ]; then
+        echo "Unable to get root filesystem start offset."
+        exit 1
+    fi
+    
+    # Get sizes in MB
+    local bootfs_size=`df -B MB | grep '/dev/mmcblk0p1' | awk '{print $2}' | awk -F "MB" '{print $1}'`
+    if [ -z ${bootfs_size} ]; then
+        echo "Unable to get boot filesystem size."
+        exit 1
+    fi
+    
+    local rootfs_size=`df -B MB | grep 'rootfs' | awk '{print $3}' | awk -F "MB" '{print $1}'`
+    if [ -z ${rootfs_size} ]; then
+        echo "Unable to get root filesystem size."
+        exit 1
+    fi
+
+    if ! [[ ${IMAGE_FREESPACE} =~ ^[0-9]+$ ]] ; then
+        echo "Freespace must be a positive numeric value" 
+        exit 1
+    fi
+
+    if [ $IMAGE_FREESPACE -lt 8 ]; then
+        echo "Freespace has been set to 8Mb"
+        $IMAGE_FREESPACE=8
+    fi
+    
+    local image_size=$(expr ${bootfs_size} + ${rootfs_size} + ${IMAGE_FREESPACE} )    
+    
+    echo "Creating image file..."
+    dd if=/dev/zero of=${IMAGE_FILE} bs=1M count=${image_size} >& /dev/null
+    if [ $? -ne 0 ]; then
+        echo "Failed to create image file."
+        exit 1
+    fi
+
+    echo "Creating partitions."
+    parted ${IMAGE_FILE} --script -- mklabel msdos >& /dev/null
+    if [ $? -ne 0 ]; then
+        echo "Failed to create disk label."
+        exit 1
+    fi
+    
+    parted ${IMAGE_FILE} --script -- mkpart primary fat32 ${bootfs_start} ${bootfs_end} >& /dev/null
+    if [ $? -ne 0 ]; then
+        echo "Failed to create boot partition."
+        exit 1
+    fi
+    
+    parted ${IMAGE_FILE} --script -- mkpart primary ext4 ${rootfs_start} -1 >& /dev/null
+    if [ $? -ne 0 ]; then
+        echo "Failed to create root partition."
+        exit 1
+    fi
+    
+    setup_lo
+    
+    echo "Formatting boot partition."
+    mkfs.vfat -I ${IMAGE_LOOP}p1 >& /dev/null
+    if [ $? -ne 0 ]; then
+        echo "Error formating boot partition."
+        delete_lo
+        delete_mount
+        exit 1
+    fi
+    
+    echo "Formattinng root partition."
+    mkfs.ext4 ${IMAGE_LOOP}p2 >& /dev/null
+    if [ $? -ne 0 ]; then
+        echo "Error formating root partition."
+        delete_lo
+        delete_mount
+        exit 1
+    fi
+    
+    mount_image
+    
+    mkdir ${MOUNT_PATH}/dev ${MOUNT_PATH}/media ${MOUNT_PATH}/mnt ${MOUNT_PATH}/proc ${MOUNT_PATH}/run ${MOUNT_PATH}/sys ${MOUNT_PATH}/tmp
+    if [ $? -ne 0 ]; then
+        echo "Error creating directories."
+        unmount_image
+        delete_lo
+        delete_mount
+        exit 1
+    fi
+    
+    chmod a+rwxt ${MOUNT_PATH}/tmp
+    
+    unmount_image
+    delete_lo
+}
+
+function enable_raspi_config_at_boot()
+{
+    if [ -e ${MOUNT_PATH}/etc/profile.d/raspi-config.sh ]; then
+        echo "/etc/profile.d/raspi-config.sh exists, so assuming config at boot enabled"
+        return 0
+    fi
+    
+    echo "#!/bin/sh" > ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "# Part of raspi-config http://github.com/asb/raspi-config" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "#" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "# See LICENSE file for copyright and license details" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "# Should be installed to /etc/profile.d/raspi-config.sh to force raspi-config" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "# to run at initial login" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "# You may also want to set automatic login in /etc/inittab on tty1 by adding a" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "# line such as:" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "# 1:2345:respawn:/bin/login -f root tty1 </dev/tty1 >/dev/tty1 2>&1 # RPICFG_TO_DISABLE" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "if [ $(id -u) -ne 0 ]; then" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "  printf \"\nNOTICE: the software on this Raspberry Pi has not been fully configured. Please run 'sudo raspi-config'\n\n\"" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "else" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "  raspi-config" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "  exec login -f pi" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    echo "fi" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
+    
+    telinit q
+}
+
+function do_backup()
+{
+    if [ ! -f $IMAGE_FILE ]; then
+        echo "Image file $IMAGE_FILE does not exist."
+        delete_mount
+        exit 1
+    fi
+    
+    setup_lo
+    mount_image
+    
+    echo "Starting the filesystem rsync to ${IMAGE_FILE}"
+    echo "(This may take several minutes)..."
+
+    # Do not include a dhpys swapfile in the clone.  dhpys-swapfile will
+    # regenerate it at boot.
+    #
+    if [ -f /etc/dphys-swapfile ]; then
+        SWAPFILE=`cat /etc/dphys-swapfile | grep ^CONF_SWAPFILE | cut -f 2 -d=`
+        if [ "$SWAPFILE" = "" ]; then
+            SWAPFILE=/var/swap
+        fi
+        EXCLUDE_SWAPFILE="--exclude $SWAPFILE"
+    fi
+    
+    # Exclude fuse mountpoint .gvfs, various other mount points, and tmpfs
+    # file systems from the rsync.
+    sync
+    rsync ${RSYNC_OPTIONS} --delete \
+          $EXCLUDE_SWAPFILE \
+          --exclude '.gvfs' \
+          --exclude '/dev' \
+          --exclude '/media' \
+          --exclude '/mnt' \
+          --exclude '/proc' \
+          --exclude '/run' \
+          --exclude '/sys' \
+          --exclude '/tmp' \
+          --exclude 'lost\+found' \
+          --exclude '/etc/udev/rules.d/70-persistent-net.rules' \
+          --exclude "${MOUNT_PATH}" \
+          --exclude "${IMAGE_FILE}" \
+          / ${MOUNT_PATH}/
+    if [ $? -ne 0 ]; then
+        echo "Error running backup"
+        unmount_image
+        delete_lo
+        delete_mount
+        exit 1
+    fi
+    
+    enable_raspi_config_at_boot
+    
+    unmount_image
+    delete_lo
+}
+
+if [[ $EUID -ne 0 ]]; then
+    echo "This script must be run as root" 1>&2
+    exit 1
+fi
+
+read -p "Backup path: [$(pwd)]: " input_var
+if [ -z "${input_var}" ]; then
+    BACKUP_PATH="$(pwd)"
+else
+    BACKUP_PATH="${input_var%/}"
+fi
+
+if [ ! -d ${BACKUP_PATH} ]; then
+    echo "Error: The backup path does not exist."
+    exit 1
+fi
+
+# Image file name
+IMAGE_FILE="${BACKUP_PATH}/$(date +%Y-%m-%d)-${DISTRIB_ID}-${DISTRIB_CODENAME}.img"
+
+if [ -f ${IMAGE_FILE} ]; then
+    echo "Deleting old backup file."
+    rm -f ${IMAGE_FILE}
+fi
+
+create_image
+do_backup
+
+delete_mount
+
+echo 
+echo "Backup stored at ${IMAGE_FILE}!"
+echo
