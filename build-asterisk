@@ -1,6 +1,8 @@
 #!/bin/bash
 # https://wiki.asterisk.org/wiki/display/AST/System+Libraries
 
+ASTERISK_VERSION='11.6-cert11'
+
 do_install_build_dependencies()
 {
     # autoconf needed for bootstrap.sh
@@ -12,11 +14,11 @@ do_install_build_dependencies()
 do_download_asterisk()
 {
     cd /usr/src
-    wget http://downloads.asterisk.org/pub/telephony/certified-asterisk/certified-asterisk-11.6-cert11.tar.gz
-    tar -zxf certified-asterisk-11.6-cert11.tar.gz
-    rm certified-asterisk-11.6-cert11.tar.gz
-    mv certified-asterisk-11.6-cert11 asterisk-11.6-cert11
-    cd /usr/src/asterisk-11.6-cert11
+    wget http://downloads.asterisk.org/pub/telephony/certified-asterisk/certified-asterisk-${ASTERISK_VERSION}.tar.gz
+    tar -zxf certified-asterisk-${ASTERISK_VERSION}.tar.gz
+    rm certified-asterisk-${ASTERISK_VERSION}.tar.gz
+    mv certified-asterisk-${ASTERISK_VERSION} asterisk-${ASTERISK_VERSION}
+    cd /usr/src/asterisk-${ASTERISK_VERSION}
     #./contrib/scripts/install_prereq install
     ./bootstrap.sh
 }
@@ -24,7 +26,7 @@ do_download_asterisk()
 # Build Asterisk
 do_build_asterisk()
 {
-    cd /usr/src/asterisk-${VERSION}
+    cd /usr/src/asterisk-${ASTERISK_VERSION}
     
     ./configure --disable-xmldoc
     make menuselect
