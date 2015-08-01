@@ -4,6 +4,10 @@
 VERSION="11.6-cert11"
 SOURCE="http://downloads.asterisk.org/pub/telephony/certified-asterisk/releases/certified-asterisk-${VERSION}.tar.gz"
 
+do_install_build_dependencies()
+{
+    apt-get install -y build-essential libsqlite3-dev libxml2-dev libncurses5-dev libncursesw5-dev libiksemel-dev libssl-dev libeditline-dev libedit-dev curl libcurl4-gnutls-dev
+}
 
 # Get Asterisk sources
 do_download_asterisk()
@@ -50,5 +54,6 @@ do_set_permissions()
     chmod 770 /var/lib/asterisk/
 }
 
+do_install_build_dependencies
 do_download_asterisk
 do_build_asterisk
