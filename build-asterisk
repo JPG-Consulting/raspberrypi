@@ -59,6 +59,9 @@ do_set_permissions()
     chmod 770 /var/lib/asterisk/
 }
 
+# Had some troubles with date on my tests so...
+ntptime -s time.nist.gov
+
 do_install_build_dependencies
 do_download_asterisk
 do_build_asterisk
