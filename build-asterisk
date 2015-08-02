@@ -27,6 +27,8 @@ do_download_asterisk()
 
 do_build_chan_dongle()
 {
+    apt-get install -y -qq usb-modeswitch usbutils
+    
     cd /usr/src
     wget https://github.com/jstasiak/asterisk-chan-dongle/archive/asterisk11.tar.gz -O asterisk-chan-dongle-asterisk11.tar.gz
     tar -zxf asterisk-chan-dongle-asterisk11.tar.gz
@@ -35,6 +37,15 @@ do_build_chan_dongle()
     aclocal && autoconf && automake -a
     ./configure --with-asterisk="/usr/src/asterisk-${ASTERISK_VERSION}/include"
     make
+    
+    #checkinstall -D --install=no \
+    #    --requires="usb-modeswitch, usbutils"
+    
+    make install
+    cp etc/dongle.conf /etc/asterisk
+    cp etc/extensions.conf /etc/asterisk/extensions-dongle.conf
+    
+    asterisk -rx "core restart now"
 }
 
 # Build Asterisk
@@ -81,3 +92,4 @@ fi
 do_install_build_dependencies
 do_download_asterisk
 do_build_asterisk
+do_build_chan_dongle
