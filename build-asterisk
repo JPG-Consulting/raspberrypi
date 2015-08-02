@@ -60,7 +60,9 @@ do_set_permissions()
 }
 
 # Had some troubles with date on my tests so...
-ntptime -s time.nist.gov
+if which ntptime >/dev/null; then
+    ntptime -s time.nist.gov
+fi
 
 do_install_build_dependencies
 do_download_asterisk
