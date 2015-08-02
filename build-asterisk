@@ -1,7 +1,8 @@
 #!/bin/bash
 # https://wiki.asterisk.org/wiki/display/AST/System+Libraries
 
-ASTERISK_VERSION='11.6-cert11'
+#ASTERISK_VERSION='11.6-cert11'
+ASTERISK_VERSION='11.18.0'
 
 do_install_build_dependencies()
 {
@@ -14,10 +15,12 @@ do_install_build_dependencies()
 do_download_asterisk()
 {
     cd /usr/src
-    wget http://downloads.asterisk.org/pub/telephony/certified-asterisk/certified-asterisk-${ASTERISK_VERSION}.tar.gz
-    tar -zxf certified-asterisk-${ASTERISK_VERSION}.tar.gz
-    rm certified-asterisk-${ASTERISK_VERSION}.tar.gz
-    mv certified-asterisk-${ASTERISK_VERSION} asterisk-${ASTERISK_VERSION}
+    #wget http://downloads.asterisk.org/pub/telephony/certified-asterisk/certified-asterisk-${ASTERISK_VERSION}.tar.gz
+    wget http://downloads.asterisk.org/pub/telephony/asterisk/asterisk-${ASTERISK_VERSION}.tar.gz
+    #tar -zxf certified-asterisk-${ASTERISK_VERSION}.tar.gz
+    #rm certified-asterisk-${ASTERISK_VERSION}.tar.gz
+    #mv certified-asterisk-${ASTERISK_VERSION} asterisk-${ASTERISK_VERSION}
+    tar -zxf asterisk-${ASTERISK_VERSION}
     cd /usr/src/asterisk-${ASTERISK_VERSION}
     #./contrib/scripts/install_prereq install
     ./bootstrap.sh
