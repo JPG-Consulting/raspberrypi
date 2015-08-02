@@ -19,7 +19,7 @@ do_download_asterisk()
     #tar -zxf certified-asterisk-${ASTERISK_VERSION}.tar.gz
     #rm certified-asterisk-${ASTERISK_VERSION}.tar.gz
     #mv certified-asterisk-${ASTERISK_VERSION} asterisk-${ASTERISK_VERSION}
-    tar -zxf asterisk-${ASTERISK_VERSION}
+    tar -zxf asterisk-${ASTERISK_VERSION}.tar.gz
     cd /usr/src/asterisk-${ASTERISK_VERSION}
     #./contrib/scripts/install_prereq install
     ./bootstrap.sh
