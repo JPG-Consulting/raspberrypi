@@ -108,7 +108,7 @@ do_build_asterisk()
     fi
     
     # Change some config values
-    sed "s/^;live_dangerously = no/live_dangerously = no /" /etc/asterisk/asterisk.conf
+    sed "s/^;live_dangerously = no/live_dangerously = no /" -i /etc/asterisk/asterisk.conf
 }
 
 do_set_permissions()
