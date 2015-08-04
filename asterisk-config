@@ -153,7 +153,7 @@ do_spa3102_config() {
     echo "registersip=no" >> /etc/asterisk/sip.conf
     echo "host=dynamic ; This device registers with us" >> /etc/asterisk/sip.conf
     echo "context=spa3102-pstn ; the internal context controls what we can do" >> /etc/asterisk/sip.conf
-    echo "cid_number=${SPA3102_PSTN_CID}" >> /etc/asterisk/sip.conf
+    echo ";;cid_number=${SPA3102_PSTN_CID}" >> /etc/asterisk/sip.conf
     echo "hasvoicemail=no" >> /etc/asterisk/sip.conf
     echo "threewaycalling=no" >> /etc/asterisk/sip.conf
     echo "callwaiting=no" >> /etc/asterisk/sip.conf
