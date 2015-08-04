@@ -46,6 +46,8 @@ do_spa3102_config() {
     
     local SPA3102_LINE1_USERNAME
     local SPA3102_LINE1_PASSWD
+
+    local SPA3102_NAT='no'
     
     # my area uses 9 digit dialing, hence the 9 X's
     # change the following line to suit your needs
@@ -67,6 +69,11 @@ do_spa3102_config() {
             return 1
         fi
     done
+    
+    whiptail --yesno "SPA3102 is behind NAT?" 20 60 2
+    if [ $? -eq 0 ]; then # yes
+        SPA3102_NAT='yes'
+    fi
     
     SPA3102_PSTN_SIP_PORT=$(whiptail --inputbox "Please enter the SIP port of SPA3102 PSTN" 20 60 "${SPA3102_PSTN_SIP_PORT}" 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
@@ -133,7 +140,7 @@ do_spa3102_config() {
     echo ";allow=G729" >> /etc/asterisk/sip.conf
     echo ";allow=G723.1" >> /etc/asterisk/sip.conf
     echo "qualify=yes ; Qualify peer is no more than 2000 ms away" >> /etc/asterisk/sip.conf
-    echo "nat=no ; located in the same LAN as Asterisk" >> /etc/asterisk/sip.conf
+    echo "nat=${SPA3102_NAT} ; located in the same LAN as Asterisk" >> /etc/asterisk/sip.conf
     
     echo "" >> /etc/asterisk/sip.conf
     echo "[spa3102-pstn]" >> /etc/asterisk/sip.conf
@@ -163,7 +170,9 @@ do_spa3102_config() {
     echo ";allow=G726" >> /etc/asterisk/sip.conf
     echo ";allow=G729" >> /etc/asterisk/sip.conf
     echo ";allow=G723.1" >> /etc/asterisk/sip.conf
-
+    echo "qualify=yes ; Qualify peer is no more than 2000 ms away" >> /etc/asterisk/sip.conf
+    echo "nat=${SPA3102_NAT} ; located in the same LAN as Asterisk" >> /etc/asterisk/sip.conf
+    
     # /etc/asterisk/extensions.conf
     if [ ! -f /etc/asterisk/extensions.conf.orig ]; then
         cp /etc/asterisk/extensions.conf /etc/asterisk/extensions.conf.orig
