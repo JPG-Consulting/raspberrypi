@@ -117,12 +117,11 @@ do_set_permissions()
 }
 
 # Had some troubles with date on my tests so...
-apt-get install -y -qq ntp
-service ntp stop
 if which ntptime >/dev/null; then
+    service ntp stop
     ntptime -s time.nist.gov
+    service ntp start
 fi
-service ntp start
 
 
 do_install_build_dependencies
