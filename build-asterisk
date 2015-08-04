@@ -47,6 +47,14 @@ do_build_chan_dongle()
     cp etc/dongle.conf /etc/asterisk
     cp etc/extensions.conf /etc/asterisk/extensions-dongle.conf
     
+    # Backups
+    if [ ! -f /etc/asterisk/modules.conf.orig ]; then
+        cp /etc/asterisk/modules.conf /etc/asterisk/modules.conf.orig
+    fi
+    cp /etc/asterisk/modules.conf /etc/asterisk/modules.conf.`date +%Y.%m.%d.%Hh.%mm`
+    
+    # TODO: Disable chan_dongle by default
+    
     asterisk -rx "core restart now"
 }
 
