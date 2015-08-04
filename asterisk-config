@@ -50,7 +50,7 @@ do_spa3102_cofig() {
             if is_valid_ip $SPA3102_IP_ADDRESS; then
                 break
             else
-                whiptail --msgbox "Invalid IP address." 20 60 1 ;;
+                whiptail --msgbox "Invalid IP address." 20 60 1
             fi
         else
             return 1
