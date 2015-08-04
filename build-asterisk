@@ -129,6 +129,9 @@ do_set_permissions()
 }
 
 # Had some troubles with date on my tests so...
+if [ $(dpkg-query -W -f='${Status}' ntpdate 2>/dev/null | grep -c "ok installed") -eq 0 ]; then
+    apt-get install -y -qq ntpdate
+fi
 if which ntptime >/dev/null; then
     service ntp stop
     ntptime -s time.nist.gov
