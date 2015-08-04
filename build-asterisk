@@ -52,7 +52,9 @@ do_build_chan_dongle()
         cp /etc/asterisk/modules.conf /etc/asterisk/modules.conf.orig
     fi
     
-    # TODO: Disable chan_dongle by default
+    # Disable chan_dongle by default
+    sed -e "s/^load => chan_dongle.so/noload => chan_dongle.so/" -i /etc/asterisk/modules.conf
+    grep -q -e "^noload => chan_dongle.so" /etc/asterisk/modules.conf || echo "noload => chan_dongle.so" >> /etc/asterisk/modules.conf
     
     asterisk -rx "core restart now"
 }
