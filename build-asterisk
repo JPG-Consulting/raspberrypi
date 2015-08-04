@@ -13,7 +13,7 @@ do_install_build_dependencies()
 # Get Asterisk sources
 do_download_asterisk()
 {
-    echo "Downloading Asterisk ${ASTERISK_VERSION}...
+    echo "Downloading Asterisk ${ASTERISK_VERSION}..."
     cd /usr/src
     #wget http://downloads.asterisk.org/pub/telephony/certified-asterisk/certified-asterisk-${ASTERISK_VERSION}.tar.gz
     wget http://downloads.asterisk.org/pub/telephony/asterisk/asterisk-${ASTERISK_VERSION}.tar.gz
@@ -28,7 +28,7 @@ do_download_asterisk()
 
 do_build_chan_dongle()
 {
-    echo "Building chan_dongle...
+    echo "Building chan_dongle..."
     apt-get install -y -qq usb-modeswitch usbutils
     
     cd /usr/src
