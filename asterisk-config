@@ -37,7 +37,7 @@ function is_valid_ip()
     return $stat
 }
 
-do_spa3102_cofig() {
+do_spa3102_config() {
     local SPA3102_IP_ADDRESS, SPA3102_PSTN_CID
     
     if [ ! -f /etc/asterisk/sip.conf.orig ]; then
