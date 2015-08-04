@@ -116,6 +116,7 @@ do_set_permissions()
     #MODIFYING ASTERISK
     ln -s /var/lib/asterisk/moh /var/lib/asterisk/mohmp3   
     sed -i "s/\(astrundir *=> *\)\(.*\)/\1\/var\/run\/asterisk/" /etc/asterisk/asterisk.conf
+    # TODO: asterisk.conf ";live_dangerously" = no uncomment
     sed -i '1 {s/\<sh\>/bash/}' /usr/sbin/safe_asterisk
     sed -i "s,SAFE_AST_BACKGROUND=0,SAFE_AST_BACKGROUND=1," /usr/sbin/safe_asterisk
     chown asterisk:asterisk -R /var/run/asterisk
