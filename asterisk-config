@@ -87,11 +87,11 @@ do_spa3102_cofig() {
     echo "[spa3102-line1]" >> /etc/asterisk/extensions.conf
     echo ";; my area uses 10 digit dialing, hence the 10 X's" >> /etc/asterisk/extensions.conf
     echo ";; change the following line to suit your needs" >> /etc/asterisk/extensions.conf
-    echo "exten => _XXXXXXXXXX,1,Dial(SIP/${EXTEN}@pstn,60,)" >> /etc/asterisk/extensions.conf
+    echo "exten => _XXXXXXXXXX,1,Dial(SIP/\${EXTEN}@spa3102-pstn,60,)" >> /etc/asterisk/extensions.conf
     echo ";; toll free numbers" >> /etc/asterisk/extensions.conf
-    echo "exten => _1800XXXXXXX,1,Dial(SIP/${EXTEN}@pstn,60,)" >> /etc/asterisk/extensions.conf
-    echo "exten => _1888XXXXXXX,1,Dial(SIP/${EXTEN}@pstn,60,)" >> /etc/asterisk/extensions.conf
-    echo "exten => _1866XXXXXXX,1,Dial(SIP/${EXTEN}@pstn,60,)" >> /etc/asterisk/extensions.conf
+    echo "exten => _1800XXXXXXX,1,Dial(SIP/\${EXTEN}@spa3102-pstn,60,)" >> /etc/asterisk/extensions.conf
+    echo "exten => _1888XXXXXXX,1,Dial(SIP/\${EXTEN}@spa3102-pstn,60,)" >> /etc/asterisk/extensions.conf
+    echo "exten => _1866XXXXXXX,1,Dial(SIP/\${EXTEN}@spa3102-pstn,60,)" >> /etc/asterisk/extensions.conf
     
     echo "" >> /etc/asterisk/extensions.conf
     echo "[spa3102-pstn]" >> /etc/asterisk/extensions.conf
