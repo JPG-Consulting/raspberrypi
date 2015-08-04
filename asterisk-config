@@ -86,6 +86,9 @@ do_spa3102_config() {
     echo "disallow=all" >> /etc/asterisk/sip.conf
     echo "allow=alaw" >> /etc/asterisk/sip.conf
     echo "allow=ulaw" >> /etc/asterisk/sip.conf
+    echo ";allow=G726" >> /etc/asterisk/sip.conf
+    echo ";allow=G729" >> /etc/asterisk/sip.conf
+    echo ";allow=G723.1" >> /etc/asterisk/sip.conf
     echo "qualify=yes ; Qualify peer is no more than 2000 ms away" >> /etc/asterisk/sip.conf
     echo "nat=no ; located in the same LAN as Asterisk" >> /etc/asterisk/sip.conf
     
@@ -114,6 +117,9 @@ do_spa3102_config() {
     echo "disallow=all" >> /etc/asterisk/sip.conf
     echo "allow=alaw" >> /etc/asterisk/sip.conf
     echo "allow=ulaw" >> /etc/asterisk/sip.conf
+    echo ";allow=G726" >> /etc/asterisk/sip.conf
+    echo ";allow=G729" >> /etc/asterisk/sip.conf
+    echo ";allow=G723.1" >> /etc/asterisk/sip.conf
 
     # /etc/asterisk/extensions.conf
     if [ ! -f /etc/asterisk/extensions.conf.orig ]; then
