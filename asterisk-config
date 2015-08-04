@@ -73,7 +73,7 @@ do_spa3102_config() {
         return 1
     fi
     
-    SPA3102_PSTN_CID=$(whiptail --inputbox "Please enter the CID of SPA3102 PSTN" 20 60 "" 3>&1 1>&2 2>&3)
+    SPA3102_PSTN_CID=$(whiptail --inputbox "Please enter the phone number of SPA3102 PSTN" 20 60 "" 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
         return 1
     fi
