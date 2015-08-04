@@ -184,15 +184,15 @@ do_spa3102_config() {
     echo ";; in the SPA3102 PSTN tab dialplan S0<:123@192.168.0.2>" >> /etc/asterisk/extensions.conf
     echo ";; causes the incoming PSTN to VoIP calls to be redirected" >> /etc/asterisk/extensions.conf
     echo ";; to this extension" >> /etc/asterisk/extensions.conf
-    echo "exten => 123,1,NoOP(\${CALLERID}) ; show the caller ID info in the console" >> /etc/asterisk/extensions.conf
-    echo "exten => 123,n,Ringing()" >> /etc/asterisk/extensions.conf
-    echo "exten => 123,n,Answer()" >> /etc/asterisk/extensions.conf
-    echo "exten => 123,n,Playback(silence/1)" >> /etc/asterisk/extensions.conf
-    echo "exten => 123,n,Playback(pls-wait-connect-call)" >> /etc/asterisk/extensions.conf
-    echo "exten => 123,n,Wait(3)" >> /etc/asterisk/extensions.conf
+    echo "exten => ${SPA3102_PSTN_CID},1,NoOP(\${CALLERID}) ; show the caller ID info in the console" >> /etc/asterisk/extensions.conf
+    echo "exten => ${SPA3102_PSTN_CID},n,Ringing()" >> /etc/asterisk/extensions.conf
+    echo "exten => ${SPA3102_PSTN_CID},n,Answer()" >> /etc/asterisk/extensions.conf
+    echo "exten => ${SPA3102_PSTN_CID},n,Playback(silence/1)" >> /etc/asterisk/extensions.conf
+    echo "exten => ${SPA3102_PSTN_CID},n,Playback(pls-wait-connect-call)" >> /etc/asterisk/extensions.conf
+    echo "exten => ${SPA3102_PSTN_CID},n,Wait(3)" >> /etc/asterisk/extensions.conf
     echo ";; attempt to connect the call to the FXS (Line1) port" >> /etc/asterisk/extensions.conf
-    echo "exten => 123,n,Dial(SIP/spa3102-line1,60)" >> /etc/asterisk/extensions.conf
-    echo "exten => 123,n,Congestion" >> /etc/asterisk/extensions.conf
+    echo "exten => ${SPA3102_PSTN_CID},n,Dial(SIP/spa3102-line1,60)" >> /etc/asterisk/extensions.conf
+    echo "exten => ${SPA3102_PSTN_CID},n,Congestion" >> /etc/asterisk/extensions.conf
     
     return 0
 }
