@@ -44,6 +44,9 @@ do_spa3102_config() {
     local SPA3102_PSTN_PASSWD
     local SPA3102_PSTN_SIP_PORT='5061'
     
+    local SPA3102_LINE1_USERNAME
+    local SPA3102_LINE1_PASSWD
+    
     if [ ! -f /etc/asterisk/sip.conf.orig ]; then
         cp /etc/asterisk/sip.conf /etc/asterisk/sip.conf.orig
     fi
@@ -81,10 +84,22 @@ do_spa3102_config() {
         return 1
     fi
     
+    # Line 1
+    SPA3102_LINE1_USERNAME=${SPA3102_PSTN_CID}
+    SPA3102_LINE1_USERNAME=$(whiptail --inputbox "Please enter the username of SPA3102 Line1" 20 60 "${SPA3102_LINE1_USERNAME}" 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
+    SPA3102_LINE1_PASSWD=$(whiptail --passwordbox "Please enter the password of SPA3102 Line1" 20 60 "" 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
     echo "" >> /etc/asterisk/sip.conf
     echo "[spa3102-line1]" >> /etc/asterisk/sip.conf
-    echo "username=124" >> /etc/asterisk/sip.conf
-    echo "secret=fxo" >> /etc/asterisk/sip.conf
+    echo "username=${SPA3102_LINE1_USERNAME}" >> /etc/asterisk/sip.conf
+    echo "secret=${SPA3102_LINE1_PASSWD}" >> /etc/asterisk/sip.conf
     echo "call-limit=1" >> /etc/asterisk/sip.conf
     echo "type=peer" >> /etc/asterisk/sip.conf
     echo "registersip=no" >> /etc/asterisk/sip.conf
