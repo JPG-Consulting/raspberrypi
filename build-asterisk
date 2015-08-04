@@ -57,14 +57,43 @@ do_build_asterisk()
     cd /usr/src/asterisk-${ASTERISK_VERSION}
     
     ./configure --disable-xmldoc
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to run the configure script for Asterisk ${ASTERISK_VERSION}"
+        exit 1
+    fi
+    
     make menuselect
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to run \"make menuselect\" for Asterisk ${ASTERISK_VERSION}"
+        exit 1
+    fi
+    
     make
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to run \"make\" for Asterisk ${ASTERISK_VERSION}"
+        exit 1
+    fi
+    
     make install
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to run \"make install\" for Asterisk ${ASTERISK_VERSION}"
+        exit 1
+    fi
+    
     #checkinstall -D --install=no --pkgversion=${VERSION} \
     #    --requires="libc6, libcap2, libedit2, libgcc1, libpopt0, libsqlite3-0, libssl1.0.0, libstdc++6, libtinfo5, libxml2, libiksemel3, sox, uuid"
 
     make samples
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to run \"make samples\" for Asterisk ${ASTERISK_VERSION}"
+        exit 1
+    fi
+    
     make config
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to run \"make config\" for Asterisk ${ASTERISK_VERSION}"
+        exit 1
+    fi
 }
 
 do_set_permissions()
