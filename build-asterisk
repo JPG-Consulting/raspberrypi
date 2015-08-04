@@ -51,7 +51,6 @@ do_build_chan_dongle()
     if [ ! -f /etc/asterisk/modules.conf.orig ]; then
         cp /etc/asterisk/modules.conf /etc/asterisk/modules.conf.orig
     fi
-    cp /etc/asterisk/modules.conf /etc/asterisk/modules.conf.`date +%Y.%m.%d.%Hh.%mm`
     
     # TODO: Disable chan_dongle by default
     
@@ -116,7 +115,6 @@ do_set_permissions()
     
     #MODIFYING ASTERISK
     ln -s /var/lib/asterisk/moh /var/lib/asterisk/mohmp3   
-    cp /etc/asterisk/asterisk.conf /etc/asterisk/asterisk.conf.`date +%Y.%m.%d.%Hh.%mm`
     sed -i "s/\(astrundir *=> *\)\(.*\)/\1\/var\/run\/asterisk/" /etc/asterisk/asterisk.conf
     sed -i '1 {s/\<sh\>/bash/}' /usr/sbin/safe_asterisk
     sed -i "s,SAFE_AST_BACKGROUND=0,SAFE_AST_BACKGROUND=1," /usr/sbin/safe_asterisk
