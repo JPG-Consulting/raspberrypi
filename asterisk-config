@@ -20,9 +20,46 @@ calc_wt_size() {
     WT_MENU_HEIGHT=$(($WT_HEIGHT-7))
 }
 
+function is_valid_ip()
+{
+    local  ip=$1
+    local  stat=1
+
+    if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        OIFS=$IFS
+        IFS='.'
+        ip=($ip)
+        IFS=$OIFS
+        [[ ${ip[0]} -le 255 && ${ip[1]} -le 255 \
+            && ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
+        stat=$?
+    fi
+    return $stat
+}
+
 do_spa3102_cofig() {
+    local SPA3102_IP_ADDRESS, SPA3102_PSTN_CID
+    
     if [ ! -f /etc/asterisk/sip.conf.orig ]; then
         cp /etc/asterisk/sip.conf /etc/asterisk/sip.conf.orig
+    fi
+    
+    while true; do
+        SPA3102_IP_ADDRESS=$(whiptail --inputbox "Please enter the IP Address of SPA3102" 20 60 "" 3>&1 1>&2 2>&3)
+        if [ $? -eq 0 ]; then
+            if is_valid_ip $SPA3102_IP_ADDRESS; then
+                break
+            else
+                whiptail --msgbox "Invalid IP address." 20 60 1 ;;
+            fi
+        else
+            return 1
+        fi
+    done
+    
+    SPA3102_PSTN_CID=$(whiptail --inputbox "Please enter the CID of SPA3102 PSTN" 20 60 "" 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+        return 1
     fi
     
     echo "" >> /etc/asterisk/sip.conf
@@ -34,7 +71,6 @@ do_spa3102_cofig() {
     echo "registersip=no" >> /etc/asterisk/sip.conf
     echo "host=dynamic ; This device registers with us" >> /etc/asterisk/sip.conf
     echo "context=spa3102-line1 ; the internal context controls what we can do" >> /etc/asterisk/sip.conf
-    echo "cid_number=124" >> /etc/asterisk/sip.conf
     echo "hasvoicemail=no" >> /etc/asterisk/sip.conf
     echo "threewaycalling=no" >> /etc/asterisk/sip.conf
     echo "callwaiting=no" >> /etc/asterisk/sip.conf
@@ -55,7 +91,7 @@ do_spa3102_cofig() {
     echo "" >> /etc/asterisk/sip.conf
     echo "[spa3102-pstn]" >> /etc/asterisk/sip.conf
     echo "username=124" >> /etc/asterisk/sip.conf
-    echo "host=192.168.0.1" >> /etc/asterisk/sip.conf
+    echo "host=${SPA3102_IP_ADDRESS}" >> /etc/asterisk/sip.conf
     echo "port=5061" >> /etc/asterisk/sip.conf
     echo "secret=fxo" >> /etc/asterisk/sip.conf
     echo "call-limit=1" >> /etc/asterisk/sip.conf
@@ -63,7 +99,7 @@ do_spa3102_cofig() {
     echo "registersip=no" >> /etc/asterisk/sip.conf
     echo "host=dynamic ; This device registers with us" >> /etc/asterisk/sip.conf
     echo "context=spa3102-pstn ; the internal context controls what we can do" >> /etc/asterisk/sip.conf
-    echo "cid_number=124" >> /etc/asterisk/sip.conf
+    echo "cid_number=${SPA3102_PSTN_CID}" >> /etc/asterisk/sip.conf
     echo "hasvoicemail=no" >> /etc/asterisk/sip.conf
     echo "threewaycalling=no" >> /etc/asterisk/sip.conf
     echo "callwaiting=no" >> /etc/asterisk/sip.conf
@@ -108,6 +144,8 @@ do_spa3102_cofig() {
     echo ";; attempt to connect the call to the FXS (Line1) port" >> /etc/asterisk/extensions.conf
     echo "exten => 123,n,Dial(SIP/spa3102-line1,60)" >> /etc/asterisk/extensions.conf
     echo "exten => 123,n,Congestion" >> /etc/asterisk/extensions.conf
+    
+    return 0
 }
 
 calc_wt_size
