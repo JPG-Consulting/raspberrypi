@@ -101,6 +101,11 @@ do_set_permissions()
     adduser asterisk --disabled-password --home=/var/lib/asterisk --no-create-home --gecos "asterisk PBX user"
     #adduser www-data asterisk
 
+    # Backups
+    if [ ! -f /etc/asterisk/asterisk.conf.orig ]; then
+        cp /etc/asterisk/asterisk.conf /etc/asterisk/asterisk.conf.orig
+    fi
+    
     #MODIFYING ASTERISK
     ln -s /var/lib/asterisk/moh /var/lib/asterisk/mohmp3   
     cp /etc/asterisk/asterisk.conf /etc/asterisk/asterisk.conf.`date +%Y.%m.%d.%Hh.%mm`
