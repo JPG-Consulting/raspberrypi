@@ -131,7 +131,7 @@ do_spa3102_cofig() {
     
     echo "" >> /etc/asterisk/extensions.conf
     echo "[spa3102-pstn]" >> /etc/asterisk/extensions.conf
-    echo ";; extension 123 is for incoming PSTN calls" >> /etc/a" >> /etc/asterisk/extensions.confsterisk/extensions.conf
+    echo ";; extension 123 is for incoming PSTN calls" >> /etc/asterisk/extensions.confsterisk/extensions.conf
     echo ";; in the SPA3102 PSTN tab dialplan S0<:123@192.168.0.2>" >> /etc/asterisk/extensions.conf
     echo ";; causes the incoming PSTN to VoIP calls to be redirected" >> /etc/asterisk/extensions.conf
     echo ";; to this extension" >> /etc/asterisk/extensions.conf
