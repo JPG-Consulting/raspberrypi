@@ -40,6 +40,7 @@ function is_valid_ip()
 do_spa3102_config() {
     local SPA3102_IP_ADDRESS
     local SPA3102_PSTN_CID
+    local SPA3102_PSTN_USERNAME
     local SPA3102_PSTN_PASSWD
     
     if [ ! -f /etc/asterisk/sip.conf.orig ]; then
@@ -60,6 +61,11 @@ do_spa3102_config() {
     done
     
     SPA3102_PSTN_CID=$(whiptail --inputbox "Please enter the CID of SPA3102 PSTN" 20 60 "" 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
+    SPA3102_PSTN_USERNAME=$(whiptail --inputbox "Please enter the username of SPA3102 PSTN" 20 60 "PSTN" 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
         return 1
     fi
@@ -100,7 +106,7 @@ do_spa3102_config() {
     
     echo "" >> /etc/asterisk/sip.conf
     echo "[spa3102-pstn]" >> /etc/asterisk/sip.conf
-    echo "username=124" >> /etc/asterisk/sip.conf
+    echo "username=${SPA3102_PSTN_USERNAME}" >> /etc/asterisk/sip.conf
     echo "host=${SPA3102_IP_ADDRESS}" >> /etc/asterisk/sip.conf
     echo "port=5061" >> /etc/asterisk/sip.conf
     echo "secret=${SPA3102_PSTN_PASSWD}" >> /etc/asterisk/sip.conf
