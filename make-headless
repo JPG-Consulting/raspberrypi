@@ -52,6 +52,9 @@ apt-get update -y
 apt-get upgrade -y
 apt-get dist-upgrade -y
 
+# Make sure ntpdate is installed for time sync
+apt-get install -y -qq ntpdate
+
 # Install exFAT and NTFS to support memory sticks and external HDDs
 apt-get install -y -qq exfat-utils exfat-fuse ntfs-3g
 
