@@ -209,6 +209,9 @@ do_spa3102_config() {
     echo "exten => ${SPA3102_PSTN_CID},n,Dial(SIP/spa3102-line1,60)" >> /etc/asterisk/extensions.conf
     echo "exten => ${SPA3102_PSTN_CID},n,Congestion" >> /etc/asterisk/extensions.conf
     
+    # Add the trunks replacing demo
+    sed -e "s/^include => demo/include => spa3102-line1\ninclude => spa3102-pstn/" -i /etc/asterisk/extensions.conf
+
     return 0
 }
 
