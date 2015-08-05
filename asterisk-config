@@ -188,6 +188,7 @@ do_spa3102_config() {
     echo "[spa3102-line1]" >> /etc/asterisk/extensions.conf
     echo ";; area dial plan" >> /etc/asterisk/extensions.conf
     echo "exten => ${AREA_DIAL_PLAN},1,Dial(SIP/\${EXTEN}@spa3102-pstn,60,)" >> /etc/asterisk/extensions.conf
+    echo "exten => ${AREA_DIAL_PLAN},n,Hangup" >> /etc/asterisk/extensions.conf
     echo ";; toll free numbers" >> /etc/asterisk/extensions.conf
     echo ";;exten => _1800XXXXXXX,1,Dial(SIP/\${EXTEN}@spa3102-pstn,60,)" >> /etc/asterisk/extensions.conf
     echo ";;exten => _1888XXXXXXX,1,Dial(SIP/\${EXTEN}@spa3102-pstn,60,)" >> /etc/asterisk/extensions.conf
