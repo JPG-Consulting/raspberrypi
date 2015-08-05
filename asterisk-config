@@ -192,6 +192,8 @@ do_spa3102_config() {
     echo ";;exten => _1800XXXXXXX,1,Dial(SIP/\${EXTEN}@spa3102-pstn,60,)" >> /etc/asterisk/extensions.conf
     echo ";;exten => _1888XXXXXXX,1,Dial(SIP/\${EXTEN}@spa3102-pstn,60,)" >> /etc/asterisk/extensions.conf
     echo ";;exten => _1866XXXXXXX,1,Dial(SIP/\${EXTEN}@spa3102-pstn,60,)" >> /etc/asterisk/extensions.conf
+    echo ";; Internal extensions "  >> /etc/asterisk/extensions.conf
+    echo "exten => _X.,1,Dial(SIP/\${EXTEN},60,Tt)" >> /etc/asterisk/extensions.conf
     
     echo "" >> /etc/asterisk/extensions.conf
     echo "[spa3102-pstn]" >> /etc/asterisk/extensions.conf
@@ -202,9 +204,9 @@ do_spa3102_config() {
     echo "exten => ${SPA3102_PSTN_CID},1,NoOP(\${CALLERID}) ; show the caller ID info in the console" >> /etc/asterisk/extensions.conf
     echo "exten => ${SPA3102_PSTN_CID},n,Ringing()" >> /etc/asterisk/extensions.conf
     echo "exten => ${SPA3102_PSTN_CID},n,Answer()" >> /etc/asterisk/extensions.conf
-    echo "exten => ${SPA3102_PSTN_CID},n,Playback(silence/1)" >> /etc/asterisk/extensions.conf
-    echo "exten => ${SPA3102_PSTN_CID},n,Playback(pls-wait-connect-call)" >> /etc/asterisk/extensions.conf
-    echo "exten => ${SPA3102_PSTN_CID},n,Wait(3)" >> /etc/asterisk/extensions.conf
+    echo ";;exten => ${SPA3102_PSTN_CID},n,Playback(silence/1)" >> /etc/asterisk/extensions.conf
+    echo ";;exten => ${SPA3102_PSTN_CID},n,Playback(pls-wait-connect-call)" >> /etc/asterisk/extensions.conf
+    echo ";;exten => ${SPA3102_PSTN_CID},n,Wait(3)" >> /etc/asterisk/extensions.conf
     echo ";; attempt to connect the call to the FXS (Line1) port" >> /etc/asterisk/extensions.conf
     echo "exten => ${SPA3102_PSTN_CID},n,Dial(SIP/spa3102-line1,60)" >> /etc/asterisk/extensions.conf
     echo "exten => ${SPA3102_PSTN_CID},n,Congestion" >> /etc/asterisk/extensions.conf
