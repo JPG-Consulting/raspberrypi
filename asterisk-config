@@ -120,9 +120,9 @@ do_spa3102_config() {
     fi
     
     echo "" >> /etc/asterisk/sip.conf
+    echo "[spa3102-line1]" >> /etc/asterisk/sip.conf
     echo "host=${SPA3102_IP_ADDRESS}" >> /etc/asterisk/sip.conf
     echo "port=${SPA3102_LINE1_SIP_PORT}" >> /etc/asterisk/sip.conf
-    echo "[spa3102-line1]" >> /etc/asterisk/sip.conf
     echo "username=${SPA3102_LINE1_USERNAME}" >> /etc/asterisk/sip.conf
     echo "secret=${SPA3102_LINE1_PASSWD}" >> /etc/asterisk/sip.conf
     echo "call-limit=1" >> /etc/asterisk/sip.conf
