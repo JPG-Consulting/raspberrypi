@@ -46,7 +46,8 @@ do_spa3102_config() {
     
     local SPA3102_LINE1_USERNAME
     local SPA3102_LINE1_PASSWD
-
+    local SPA3102_LINE1_SIP_PORT='5062'
+    
     local SPA3102_NAT='no'
     
     # my area uses 9 digit dialing, hence the 9 X's
@@ -96,6 +97,11 @@ do_spa3102_config() {
     fi
     
     # Line 1
+    SPA3102_LINE1_SIP_PORT=$(whiptail --inputbox "Please enter the SIP port of SPA3102 Line1" 20 60 "${SPA3102_LINE1_SIP_PORT}" 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
     SPA3102_LINE1_USERNAME=${SPA3102_PSTN_CID}
     SPA3102_LINE1_USERNAME=$(whiptail --inputbox "Please enter the username of SPA3102 Line1" 20 60 "${SPA3102_LINE1_USERNAME}" 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
@@ -114,13 +120,14 @@ do_spa3102_config() {
     fi
     
     echo "" >> /etc/asterisk/sip.conf
+    echo "host=${SPA3102_IP_ADDRESS}" >> /etc/asterisk/sip.conf
+    echo "port=${SPA3102_LINE1_SIP_PORT}" >> /etc/asterisk/sip.conf
     echo "[spa3102-line1]" >> /etc/asterisk/sip.conf
     echo "username=${SPA3102_LINE1_USERNAME}" >> /etc/asterisk/sip.conf
     echo "secret=${SPA3102_LINE1_PASSWD}" >> /etc/asterisk/sip.conf
     echo "call-limit=1" >> /etc/asterisk/sip.conf
     echo "type=peer" >> /etc/asterisk/sip.conf
     echo "registersip=no" >> /etc/asterisk/sip.conf
-    echo "host=dynamic ; This device registers with us" >> /etc/asterisk/sip.conf
     echo "context=spa3102-line1 ; the internal context controls what we can do" >> /etc/asterisk/sip.conf
     echo "hasvoicemail=no" >> /etc/asterisk/sip.conf
     echo "threewaycalling=no" >> /etc/asterisk/sip.conf
@@ -151,7 +158,6 @@ do_spa3102_config() {
     echo "call-limit=1" >> /etc/asterisk/sip.conf
     echo "type=peer" >> /etc/asterisk/sip.conf
     echo "registersip=no" >> /etc/asterisk/sip.conf
-    echo "host=dynamic ; This device registers with us" >> /etc/asterisk/sip.conf
     echo "context=spa3102-pstn ; the internal context controls what we can do" >> /etc/asterisk/sip.conf
     echo ";;cid_number=${SPA3102_PSTN_CID}" >> /etc/asterisk/sip.conf
     echo "hasvoicemail=no" >> /etc/asterisk/sip.conf
