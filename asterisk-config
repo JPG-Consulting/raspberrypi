@@ -220,6 +220,10 @@ do_spa3102_config() {
 
 do_chan_dongle_config()
 {
+    if [ ! -f /etc/asterisk/dongle.conf.orig ]; then
+        cp /etc/asterisk/dongle.conf /etc/asterisk/dongle.conf.orig
+    fi
+    
     
 }
 
