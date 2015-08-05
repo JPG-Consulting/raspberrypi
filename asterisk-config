@@ -138,7 +138,7 @@ do_spa3102_config() {
     echo "hasiax=no" >> /etc/asterisk/sip.conf
     echo "canreinvite=no" >> /etc/asterisk/sip.conf
     echo "dtmfmode=rfc2833" >> /etc/asterisk/sip.conf
-    echo "insecure=no" >> /etc/asterisk/sip.conf
+    echo "insecure=port,invite" >> /etc/asterisk/sip.conf
     echo "autoprov=no" >> /etc/asterisk/sip.conf
     echo "disallow=all" >> /etc/asterisk/sip.conf
     echo "allow=ulaw" >> /etc/asterisk/sip.conf
@@ -169,7 +169,7 @@ do_spa3102_config() {
     echo "hasiax=no" >> /etc/asterisk/sip.conf
     echo "canreinvite=no" >> /etc/asterisk/sip.conf
     echo "dtmfmode=rfc2833" >> /etc/asterisk/sip.conf
-    echo "insecure=very" >> /etc/asterisk/sip.conf
+    echo "insecure=port,invite" >> /etc/asterisk/sip.conf
     echo "disallow=all" >> /etc/asterisk/sip.conf
     echo "allow=ulaw" >> /etc/asterisk/sip.conf
     echo "allow=alaw" >> /etc/asterisk/sip.conf
