@@ -218,6 +218,11 @@ do_spa3102_config() {
     return 0
 }
 
+do_chan_dongle_config()
+{
+    
+}
+
 calc_wt_size
 
 whiptail --yesno "Configure Linksys SPA3102?" 20 60 2
@@ -225,3 +230,7 @@ if [ $? -eq 0 ]; then # yes
     do_spa3102_config
 fi
 
+whiptail --yesno "Configure chan_dongle?" 20 60 2
+if [ $? -eq 0 ]; then # yes
+    do_chan_dongle_config
+fi
