@@ -212,6 +212,9 @@ do_spa3102_config() {
     # Add the trunks replacing demo
     sed -e "s/^include => demo/include => spa3102-line1\ninclude => spa3102-pstn/" -i /etc/asterisk/extensions.conf
 
+    # Restart asterisk
+    asterisk -x "core restart now"
+    
     return 0
 }
 
