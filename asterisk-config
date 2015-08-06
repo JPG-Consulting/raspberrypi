@@ -37,6 +37,24 @@ function is_valid_ip()
     return $stat
 }
 
+do_optimize_ram() {
+    # No monitor so make GPU memory as low as possible
+    if [ -e /boot/start_cd.elf ]; then
+        grep -q '^gpu_mem' /boot/config.txt
+        if [ $? -eq 0 ]; then
+            sed -e 's/^gpu_mem=.*$/gpu_mem=16/' -i /boot/config.txt
+        else
+            echo "gpu_mem=16" >> /boot/config.txt
+        fi
+    fi
+
+    # Disable TTYs to save some RAM
+    sed -i '/[2-6]:23:respawn:\/sbin\/getty 38400 tty[2-6]/s%^%#%g' /etc/inittab
+
+    # Disable IPv6
+    echo "net.ipv6.conf.all.disable_ipv6 = 1" > /etc/sysctl.d/70-disable-ipv6.conf
+}
+
 do_spa3102_config() {
     local SPA3102_IP_ADDRESS
     local SPA3102_PSTN_CID
@@ -231,6 +249,8 @@ do_chan_dongle_config()
 }
 
 calc_wt_size
+
+do_optimize_ram
 
 whiptail --yesno "Configure Linksys SPA3102?" 20 60 2
 if [ $? -eq 0 ]; then # yes
