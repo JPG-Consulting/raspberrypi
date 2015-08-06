@@ -149,7 +149,7 @@ do_language_select() {
         LOCALE_SV=ON
     fi
     
-    whiptail --title "Asterisk Setup" --checklist \
+    SOUND_LOCALES=$(whiptail --title "Asterisk Setup" --checklist \
         "Choose core sound files" 20 78 4 \
         "en" "Allow connections to other hosts" ${LOCALE_EN} \
         "en_AU" "Allow connections from other hosts" ${LOCALE_EN_AU} \
@@ -159,8 +159,13 @@ do_language_select() {
         "it" "Allow mounting of remote devices" ${LOCALE_IT} \
         "ja" "Allow mounting of remote devices" ${LOCALE_JA} \
         "ru" "Allow mounting of remote devices" ${LOCALE_RU} \
-        "sv" "Allow mounting of remote devices" ${LOCALE_SV}
-        
+        "sv" "Allow mounting of remote devices" ${LOCALE_SV} \
+        3>&1 1>&2 2>&3)
+    
+    if [ $? -eq 0 ]; then
+        echo $SOUND_LOCALES
+    fi
+    exit 0
     whiptail --title "Check list example" --checklist \
         "Choose user's permissions" 20 78 4 \
         "alaw" "Allow connections to other hosts" OFF \
