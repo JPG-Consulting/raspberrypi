@@ -152,7 +152,7 @@ do_language_select() {
     fi
     
     SOUND_LOCALES=$(whiptail --title "Asterisk Setup" --checklist \
-        "Choose core sound files" 20 78 4 \
+        "Choose core sound files" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
         "en" "Generic English" ${LOCALE_EN} \
         "en_AU" "Australian English" ${LOCALE_EN_AU} \
         "en_GB" "British English" ${LOCALE_EN_GB} \
