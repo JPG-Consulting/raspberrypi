@@ -100,8 +100,78 @@ do_backups() {
     fi
 }
 
+# Languages from http://downloads.asterisk.org/pub/telephony/sounds/
 do_language_select() {
+    local LOCALE_EN=ON
+    local LOCALE_EN_AU=OFF
+    local LOCALE_EN_GB=OFF
+    local LOCALE_ES=OFF
+    local LOCALE_FR=OFF
+    local LOCALE_IT=OFF
+    local LOCALE_JA=OFF
+    local LOCALE_RU=OFF
+    local LOCALE_SV=OFF
     
+    if locale -a | grep ^en_AU ; then
+        LOCALE_EN_AU=ON
+    fi
+    
+    if locale -a | grep ^en_GB ; then
+        LOCALE_EN_GB=ON
+    fi
+    
+    if locale -a | grep ^en_ ; then
+        LOCALE_EN=ON
+    else
+        LOCALE_EN=OFF
+    fi
+    
+    if locale -a | grep ^es_ ; then
+        LOCALE_ES=ON
+    fi
+    
+    if locale -a | grep ^fr_ ; then
+        LOCALE_FR=ON
+    fi
+    
+    if locale -a | grep ^it_ ; then
+        LOCALE_IT=ON
+    fi
+    
+    if locale -a | grep ^ja_ ; then
+        LOCALE_JA=ON
+    fi
+    
+    if locale -a | grep ^ru_ ; then
+        LOCALE_RU=ON
+    fi
+    if locale -a | grep ^sv_ ; then
+        LOCALE_SV=ON
+    fi
+    
+    whiptail --title "Asterisk Setup" --checklist \
+        "Choose core sound files" 20 78 4 \
+        "en" "Allow connections to other hosts" ${LOCALE_EN} \
+        "en_AU" "Allow connections from other hosts" ${LOCALE_EN_AU} \
+        "en_GB" "Allow mounting of local devices" ${LOCALE_EN_GB} \
+        "es" "Allow mounting of remote devices" ${LOCALE_ES} \
+        "fr" "Allow mounting of remote devices" ${LOCALE_FR} \
+        "it" "Allow mounting of remote devices" ${LOCALE_IT} \
+        "ja" "Allow mounting of remote devices" ${LOCALE_JA} \
+        "ru" "Allow mounting of remote devices" ${LOCALE_RU} \
+        "sv" "Allow mounting of remote devices" ${LOCALE_SV}
+        
+    whiptail --title "Check list example" --checklist \
+        "Choose user's permissions" 20 78 4 \
+        "alaw" "Allow connections to other hosts" OFF \
+        "g722" "Allow connections from other hosts" OFF \
+        "g729" "Allow mounting of local devices" OFF \
+        "gsm" "Allow mounting of remote devices" ON \
+        "siren7" "Allow mounting of remote devices" OFF \
+        "siren14" "Allow mounting of remote devices" OFF \
+        "sln16" "Allow mounting of remote devices" OFF \
+        "ulaw" "Allow mounting of remote devices" OFF \
+        "wav" "Allow mounting of remote devices" OFF
 }
 
 do_spa3102_config() {
