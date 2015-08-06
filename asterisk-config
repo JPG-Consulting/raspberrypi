@@ -30,6 +30,8 @@ CHAN_DONGLE_PHONE_NUMBER=''
 # my area uses 9 digit dialing, hence the 9 X's
 # change the following line to suit your needs
 AREA_DIAL_PLAN='_XXXXXXXXX'
+
+SOUND_LOCALES=()
     
 calc_wt_size() {
     # NOTE: it's tempting to redirect stderr to /dev/null, so supress error 
@@ -151,21 +153,21 @@ do_language_select() {
     
     SOUND_LOCALES=$(whiptail --title "Asterisk Setup" --checklist \
         "Choose core sound files" 20 78 4 \
-        "en" "Allow connections to other hosts" ${LOCALE_EN} \
-        "en_AU" "Allow connections from other hosts" ${LOCALE_EN_AU} \
-        "en_GB" "Allow mounting of local devices" ${LOCALE_EN_GB} \
-        "es" "Allow mounting of remote devices" ${LOCALE_ES} \
-        "fr" "Allow mounting of remote devices" ${LOCALE_FR} \
-        "it" "Allow mounting of remote devices" ${LOCALE_IT} \
-        "ja" "Allow mounting of remote devices" ${LOCALE_JA} \
-        "ru" "Allow mounting of remote devices" ${LOCALE_RU} \
-        "sv" "Allow mounting of remote devices" ${LOCALE_SV} \
+        "en" "Generic English" ${LOCALE_EN} \
+        "en_AU" "Australian English" ${LOCALE_EN_AU} \
+        "en_GB" "British English" ${LOCALE_EN_GB} \
+        "es" "Spanish" ${LOCALE_ES} \
+        "fr" "French" ${LOCALE_FR} \
+        "it" "Italian" ${LOCALE_IT} \
+        "ja" "Japanese" ${LOCALE_JA} \
+        "ru" "Russian" ${LOCALE_RU} \
+        "sv" "Swedish" ${LOCALE_SV} \
         3>&1 1>&2 2>&3)
     
     if [ $? -eq 0 ]; then
-        echo $SOUND_LOCALES
+        echo "Core sounds: ${SOUND_LOCALES}"
     fi
-    exit 0
+
     whiptail --title "Check list example" --checklist \
         "Choose user's permissions" 20 78 4 \
         "alaw" "Allow connections to other hosts" OFF \
