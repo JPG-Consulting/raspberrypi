@@ -17,7 +17,12 @@ SPA3102_PSTN_SIP_PORT='5061'
 SPA3102_LINE1_USERNAME=''
 SPA3102_LINE1_PASSWD=''
 SPA3102_LINE1_SIP_PORT='5062'
-    
+
+SPA3102_VM_ENABLED=1
+SPA3102_VM_PIN='1234'
+SPA3102_VM_USER=''
+SPA3102_VM_EMAIL=''
+
 SPA3102_NAT='no'
 
 CHAN_DONGLE_PHONE_NUMBER=''
@@ -77,7 +82,7 @@ do_optimize_ram() {
     echo "net.ipv6.conf.all.disable_ipv6 = 1" > /etc/sysctl.d/70-disable-ipv6.conf
 }
 
-do_spa3102_config() {
+do_backups() {
     if [ ! -f /etc/asterisk/sip.conf.orig ]; then
         cp /etc/asterisk/sip.conf /etc/asterisk/sip.conf.orig
     fi
@@ -85,6 +90,21 @@ do_spa3102_config() {
     if [ ! -f /etc/asterisk/extensions.conf.orig ]; then
         cp /etc/asterisk/extensions.conf /etc/asterisk/extensions.conf.orig
     fi
+    
+    if [ ! -f /etc/asterisk/dongle.conf.orig ]; then
+        cp /etc/asterisk/dongle.conf /etc/asterisk/dongle.conf.orig
+    fi
+    
+    if [ ! -f /etc/asterisk/voicemail.conf.orig ]; then
+        cp /etc/asterisk/voicemail.conf /etc/asterisk/voicemail.conf.orig
+    fi
+}
+
+do_language_select() {
+    
+}
+
+do_spa3102_config() {
     
     while true; do
         SPA3102_IP_ADDRESS=$(whiptail --inputbox "Please enter the IP Address of SPA3102" 20 60 "" 3>&1 1>&2 2>&3)
@@ -141,6 +161,11 @@ do_spa3102_config() {
         return 1
     fi
     
+    whiptail --yesno "Enable voicemail for SPA3102?" 20 60 2
+    if [ $? -eq 0 ]; then # yes
+        SPA3102_VM_ENABLED=0
+    fi
+    
     # Dial Plans
     AREA_DIAL_PLAN=$(whiptail --inputbox "Area dial plan" 20 60 "${AREA_DIAL_PLAN}" 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
@@ -154,10 +179,6 @@ do_spa3102_config() {
 
 do_chan_dongle_config()
 {
-    if [ ! -f /etc/asterisk/dongle.conf.orig ]; then
-        cp /etc/asterisk/dongle.conf /etc/asterisk/dongle.conf.orig
-    fi
-    
     CHAN_DONGLE_PHONE_NUMBER=$(whiptail --inputbox "Please enter the phone number of device on chan_dongle" 20 60 "${CHAN_DONGLE_PHONE_NUMBER}" 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
         return 1
@@ -168,8 +189,16 @@ do_chan_dongle_config()
 }
 
 do_write_config() {
-    echo "" >> /etc/asterisk/sip.conf
     if [ $HAS_SPA3102 -eq 0 ]; then
+        if [ $SPA3102_VM_ENABLED -eq 0 ]; then
+            echo "" >> /etc/asterisk/voicemail.conf
+            echo "[vm-spa3102]" >> /etc/asterisk/voicemail.conf
+            echo "${SPA3102_PSTN_CID} => ${SPA3102_VM_PIN},${SPA3102_VM_USER},${SPA3102_VM_EMAIL}" >> /etc/asterisk/voicemail.conf
+        fi
+    fi
+    
+    if [ $HAS_SPA3102 -eq 0 ]; then
+        echo "" >> /etc/asterisk/sip.conf
         echo "[spa3102-line1]" >> /etc/asterisk/sip.conf
         echo "host=${SPA3102_IP_ADDRESS}" >> /etc/asterisk/sip.conf
         echo "port=${SPA3102_LINE1_SIP_PORT}" >> /etc/asterisk/sip.conf
@@ -259,6 +288,24 @@ do_write_config() {
         echo "exten => ${SPA3102_PSTN_CID},n,Dial(SIP/spa3102-line1,60)" >> /etc/asterisk/extensions.conf
         echo "exten => ${SPA3102_PSTN_CID},n,Congestion" >> /etc/asterisk/extensions.conf
         
+        echo "[outbound-spa3102-line1]" >> /etc/asterisk/extensions.conf
+        echo "exten => ${SPA3102_PSTN_CID},1,DIAL(SIP/spa3102-line1,60,)" >> /etc/asterisk/extensions.conf
+        echo "same => n,Goto(${SPA3102_PSTN_CID}-\${DIALSTATUS},1)            ; Jump based on status (NOANSWER,BUSY,CHANUNAVAIL,CONGESTION,ANSWER)" >> /etc/asterisk/extensions.conf
+        echo "same => n,Congestion()" >> /etc/asterisk/extensions.conf
+        if [ $SPA3102_VM_ENABLED -eq 0 ]; then
+            echo "exten => ${SPA3102_PSTN_CID}-NOANSWER,1,Voicemail(${SPA3102_PSTN_CID}@vm-spa3102,u)    ; If unavailable, send to voicemail w/ unavail announce" >> /etc/asterisk/extensions.conf
+        else
+            echo "exten => ${SPA3102_PSTN_CID}-NOANSWER,1,Congestion()" >> /etc/asterisk/extensions.conf
+        fi
+        echo "exten => ${SPA3102_PSTN_CID}-NOANSWER,n,Return()               ; If they press #, return to start" >> /etc/asterisk/extensions.conf
+        if [ $SPA3102_VM_ENABLED -eq 0 ]; then
+            echo "exten => ${SPA3102_PSTN_CID}-BUSY,1,Voicemail(${SPA3102_PSTN_CID}@vm-spa3102,b)        ; If busy, send to voicemail w/ busy announce" >> /etc/asterisk/extensions.conf
+        else
+            echo "exten => ${SPA3102_PSTN_CID}-BUSY,1,Congestion()" >> /etc/asterisk/extensions.conf
+        fi
+        echo "exten => ${SPA3102_PSTN_CID}-BUSY,n,Return()                   ; If they press #, return to start" >> /etc/asterisk/extensions.conf
+        echo "exten => ${SPA3102_PSTN_CID}-.,1,Goto(${SPA3102_PSTN_CID}-NOANSWER,1)    ; Treat anything else as no answer" >> /etc/asterisk/extensions.conf
+
         if [ $HAS_CHAN_DONGLE -eq 0 ]; then
             # chan_dongle calls to line1
             echo "" >> /etc/asterisk/extensions.conf
@@ -274,11 +321,14 @@ do_write_config() {
     
     if [ $HAS_SPA3102 -eq 0 ]; then
         # Add the trunks replacing demo
-        if [ $HAS_CHAN_DONGLE -eq 0 ]; then
-            sed -e "s/^include => demo/include => spa3102-line1\ninclude => spa3102-pstn\ninclude => from-dongle/" -i /etc/asterisk/extensions.conf
-        else
-            sed -e "s/^include => demo/include => spa3102-line1\ninclude => spa3102-pstn/" -i /etc/asterisk/extensions.conf
-        fi
+        #if [ $HAS_CHAN_DONGLE -eq 0 ]; then
+        #    sed -e "s/^include => demo/include => spa3102-line1\ninclude => spa3102-pstn\ninclude => from-dongle/" -i /etc/asterisk/extensions.conf
+        #else
+        #    sed -e "s/^include => demo/include => spa3102-line1\ninclude => spa3102-pstn/" -i /etc/asterisk/extensions.conf
+        #fi
+        
+        # Dial SPA3102 Line1 for calls to the phone number attached to SPA3102
+        sed -e "s/^\[public\]$/\[public\]\n;Dial SPA3102 Line1\nexten => ${SPA3102_PSTN_CID},1,DIAL(SIP\/spa3102-line1,60,)/" -i /etc/asterisk/extensions.conf
     fi
     
     if [ $HAS_CHAN_DONGLE -eq 0 ]; then
@@ -291,7 +341,9 @@ do_write_config() {
 
 calc_wt_size
 
+do_backups
 do_optimize_ram
+do_language_select
 
 whiptail --yesno "Configure Linksys SPA3102?" 20 60 2
 if [ $? -eq 0 ]; then # yes
