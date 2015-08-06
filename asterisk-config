@@ -169,15 +169,15 @@ do_language_select() {
     fi
 
     whiptail --title "Check list example" --checklist \
-        "Choose user's permissions" 20 78 4 \
-        "alaw" "Allow connections to other hosts" OFF \
-        "g722" "Allow connections from other hosts" OFF \
-        "g729" "Allow mounting of local devices" OFF \
-        "gsm" "Allow mounting of remote devices" ON \
+        "Choose user's permissions" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
+        "alaw" "G.711 alaw (as used in Europe)" OFF \
+        "g722" "G.722 is a high bit rate (48/56/64Kbps) ITU standard codec" OFF \
+        "g729" "G.729 is an ITU standard codec" OFF \
+        "gsm" "GSM (Global System for Mobile communications)" ON \
         "siren7" "Allow mounting of remote devices" OFF \
         "siren14" "Allow mounting of remote devices" OFF \
         "sln16" "Allow mounting of remote devices" OFF \
-        "ulaw" "Allow mounting of remote devices" OFF \
+        "ulaw" "G.711 ulaw (as used in US)" OFF \
         "wav" "Allow mounting of remote devices" OFF
 }
 
