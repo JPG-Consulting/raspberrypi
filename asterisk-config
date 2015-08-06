@@ -6,6 +6,8 @@
 
 # VARS used in the script
 HAS_SPA3102=1
+HAS_CHAN_DONGLE=1
+
 SPA3102_IP_ADDRESS=''
 SPA3102_PSTN_CID=''
 SPA3102_PSTN_USERNAME='PSTN'
@@ -17,7 +19,9 @@ SPA3102_LINE1_PASSWD=''
 SPA3102_LINE1_SIP_PORT='5062'
     
 SPA3102_NAT='no'
-    
+
+CHAN_DONGLE_PHONE_NUMBER=''
+
 # my area uses 9 digit dialing, hence the 9 X's
 # change the following line to suit your needs
 AREA_DIAL_PLAN='_XXXXXXXXX'
@@ -150,8 +154,6 @@ do_spa3102_config() {
 
 do_chan_dongle_config()
 {
-    local CHAN_DONGLE_PHONE_NUMBER
-    
     if [ ! -f /etc/asterisk/dongle.conf.orig ]; then
         cp /etc/asterisk/dongle.conf /etc/asterisk/dongle.conf.orig
     fi
@@ -160,6 +162,9 @@ do_chan_dongle_config()
     if [ $? -ne 0 ]; then
         return 1
     fi
+    
+    HAS_CHAN_DONGLE=0
+    return 0
 }
 
 do_write_config() {
@@ -253,11 +258,27 @@ do_write_config() {
         echo ";; attempt to connect the call to the FXS (Line1) port" >> /etc/asterisk/extensions.conf
         echo "exten => ${SPA3102_PSTN_CID},n,Dial(SIP/spa3102-line1,60)" >> /etc/asterisk/extensions.conf
         echo "exten => ${SPA3102_PSTN_CID},n,Congestion" >> /etc/asterisk/extensions.conf
+        
+        if [ $HAS_CHAN_DONGLE -eq 0 ]; then
+            # chan_dongle calls to line1
+            echo "" >> /etc/asterisk/extensions.conf
+            echo "[from-dongle]" >> /etc/asterisk/extensions.conf
+            echo "exten => ${CHAN_DONGLE_PHONE_NUMBER},1,NoOP(\${CALLERID}) ; show the caller ID info in the console" >> /etc/asterisk/extensions.conf
+            echo "exten => ${CHAN_DONGLE_PHONE_NUMBER},n,Ringing()" >> /etc/asterisk/extensions.conf
+            echo "exten => ${CHAN_DONGLE_PHONE_NUMBER},n,Answer()" >> /etc/asterisk/extensions.conf
+            echo ";; attempt to connect the call to the FXS (Line1) port" >> /etc/asterisk/extensions.conf
+            echo "exten => ${CHAN_DONGLE_PHONE_NUMBER},n,Dial(SIP/spa3102-line1,60)" >> /etc/asterisk/extensions.conf
+            echo "exten => ${CHAN_DONGLE_PHONE_NUMBER},n,Congestion" >> /etc/asterisk/extensions.conf
+        fi
     fi
     
     if [ $HAS_SPA3102 -eq 0 ]; then
         # Add the trunks replacing demo
-        sed -e "s/^include => demo/include => spa3102-line1\ninclude => spa3102-pstn/" -i /etc/asterisk/extensions.conf
+        if [ $HAS_CHAN_DONGLE -eq 0 ]; then
+            sed -e "s/^include => demo/include => spa3102-line1\ninclude => spa3102-pstn\ninclude => from-dongle/" -i /etc/asterisk/extensions.conf
+        else
+            sed -e "s/^include => demo/include => spa3102-line1\ninclude => spa3102-pstn/" -i /etc/asterisk/extensions.conf
+        fi
     fi
     
     # Restart asterisk
