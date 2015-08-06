@@ -281,6 +281,10 @@ do_write_config() {
         fi
     fi
     
+    if [ $HAS_CHAN_DONGLE -eq 0 ]; then
+        sed -e "s/^context => default/context=from-dongle/" -i /etc/asterisk/dongle.conf
+    fi
+    
     # Restart asterisk
     asterisk -x "core restart now"
 }
