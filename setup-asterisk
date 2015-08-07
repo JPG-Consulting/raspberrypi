@@ -163,8 +163,8 @@ do_movistar_ftth_comtrend() {
     # Se registra y le puedo llamar pero el no puede llamar :(
     # [1001]
     # type=friend                     ; Friends place calls and receive calls
-    # authuser=9XXXXXXX
-    # fromuser=9XXXXXXX
+    # authuser=${PHONENUMBER}
+    # fromuser=${PHONENUMBER}
     # host=dynamic                    ; This peer register with us
     # dtmfmode=inband                 ; Choices are inband, rfc2833, or info
     # qualify=yes
