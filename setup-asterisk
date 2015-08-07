@@ -1,0 +1,55 @@
+#!/bin/bash
+
+calc_wt_size() {
+    # NOTE: it's tempting to redirect stderr to /dev/null, so supress error 
+    # output from tput. However in this case, tput detects neither stdout or 
+    # stderr is a tty and so only gives default 80, 24 values
+    WT_HEIGHT=17
+    WT_WIDTH=$(tput cols)
+
+    if [ -z "$WT_WIDTH" ] || [ "$WT_WIDTH" -lt 60 ]; then
+        WT_WIDTH=80
+    fi
+    if [ "$WT_WIDTH" -gt 178 ]; then
+        WT_WIDTH=120
+    fi
+    WT_MENU_HEIGHT=$(($WT_HEIGHT-7))
+}
+
+do_movistar_ftth() {
+    PHONENUMBER=$(whiptail --inputbox "Introduzca su número de teléfono" 20 60 "$CURRENT_HOSTNAME" 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
+    # Configuracion para Movistar por SIP
+    echo "" >> /etc/asterisk/sip.conf
+    echo "[Movistar]" >> /etc/asterisk/sip.conf
+    echo "type=peer" >> /etc/asterisk/sip.conf
+    echo "callerid=${PHONENUMBER}" >> /etc/asterisk/sip.conf
+    echo "host=telefonica.net" >> /etc/asterisk/sip.conf
+    echo "port=5060" >> /etc/asterisk/sip.conf
+    echo "from-domain=telefonica.net" >> /etc/asterisk/sip.conf
+    echo "fromuser=${PHONENUMBER}" >> /etc/asterisk/sip.conf
+    echo "secret=${PHONENUMBER}" >> /etc/asterisk/sip.conf
+    echo "dtmfmode=auto" >> /etc/asterisk/sip.conf
+    echo "insecure=port,invite" >> /etc/asterisk/sip.conf
+    echo "outboundproxy=10.31.255.134:5070" >> /etc/asterisk/sip.conf
+    echo "nat =force_rport,comedia" >> /etc/asterisk/sip.conf
+    echo "trustrpid=yes" >> /etc/asterisk/sip.conf
+    echo "disallow=all" >> /etc/asterisk/sip.conf
+    echo "allow=ulaw" >> /etc/asterisk/sip.conf
+    echo "allow=alaw" >> /etc/asterisk/sip.conf
+    echo "context=from-movistar"" >> /etc/asterisk/sip.conf
+    
+    sed -e "s|^;register => 2345:password@sip_proxy/1234|;register => 2345:password@sip_proxy/1234\nregister => ${PHONENUMBER}@telefonica.net:${PHONENUMBER}@10.31.255.134:5070/${PHONENUMBER}|" -i /etc/asterisk/sip.conf
+
+    echo "" >> /etc/asterisk/extensions.conf
+    echo "[from-movistar]" >> /etc/asterisk/extensions.conf
+    echo "exten => ${PHONENUMBER},1,NoOP(\${CALLERID}) ; show the caller ID info in the console" >> /etc/asterisk/extensions.conf
+    echo "exten => ${PHONENUMBER},n,Ringing()" >> /etc/asterisk/extensions.conf
+}
+
+calc_wt_size
+
+do_movistar_ftth
