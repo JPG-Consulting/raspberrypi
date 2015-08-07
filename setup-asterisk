@@ -1,5 +1,8 @@
 #!/bin/bash
 
+ASTERISK_USERS_CONF_USERBASE=6000
+CURRENT_EXTENSION_NUM=${ASTERISK_USERS_CONF_USERBASE}
+
 calc_wt_size() {
     # NOTE: it's tempting to redirect stderr to /dev/null, so supress error 
     # output from tput. However in this case, tput detects neither stdout or 
@@ -14,6 +17,56 @@ calc_wt_size() {
         WT_WIDTH=120
     fi
     WT_MENU_HEIGHT=$(($WT_HEIGHT-7))
+}
+
+do_set_userbase()
+{
+    local userbase=${ASTERISK_USERS_CONF_USERBASE}
+    
+    while true; do
+        userbaser=$(whiptail --inputbox "Introduzca la primera extensión para los usuarios" 20 60 "${ASTERISK_USERS_CONF_USERBASE}" 3>&1 1>&2 2>&3)
+        if [ $? -eq 0 ]; then
+            if [[ $userbase =~ ^-?[0-9]+$ ]]; then
+                ASTERISK_USERS_CONF_USERBASE=${userbase}
+                CURRENT_EXTENSION_NUM=${userbase}
+                return 0
+            fi
+        else
+            return 1
+        fi
+    done
+}
+
+do_add_user() {
+    local extension_fullname=''
+    local extension_email=''
+    local extension_password=''
+    local extension_cid_number=''
+    
+    extension_cid_number=${CURRENT_EXTENSION_NUM}
+    
+    extension_password=$(whiptail --inputbox "Introduzca la contraseña del usuario" 20 60 "" 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
+    extension_fullname=$(whiptail --inputbox "Introduzca el nombre completo del usuario" 20 60 "" 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
+    extension_email=$(whiptail --inputbox "Introduzca el correo electrónico del usuario" 20 60 "" 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
+    echo ""  >> /etc/asterisk/users.conf
+    echo "[${extension_num]" >> /etc/asterisk/users.conf
+    echo "host=dymanic" >> /etc/asterisk/users.conf
+    echo "secret=${extension_password}" >> /etc/asterisk/users.conf
+    echo "fullname=${extension_fullname}" >> /etc/asterisk/users.conf
+    echo "email=${extension_email}" >> /etc/asterisk/users.conf
+    echo "cid_number=${extension_cid_number}" >> /etc/asterisk/users.conf
 }
 
 do_movistar_ftth() {
