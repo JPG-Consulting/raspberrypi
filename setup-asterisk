@@ -98,18 +98,15 @@ EOF
     whiptail --msgbox "Root partition has been resized.\nThe filesystem will be enlarged upon the next reboot" 20 60 2
 }
 
-disable_setup_at_boot() {
-    if [ -e /etc/profile.d/setup-asterisk ]; then
-        rm -f /etc/profile.d/setup-asterisk
-        telinit q
-    fi
-}
-
 do_finish() {
     # Cleanup backups
     [ -d /tmp/asterisk ] && rm -rf /tmp/asterisk
 
-    disable_setup_at_boot
+    # Disable setup at boor
+    if [ -e /etc/profile.d/setup-asterisk ]; then
+        rm -f /etc/profile.d/setup-asterisk
+    fi
+
     if [ $ASK_TO_REBOOT -eq 1 ]; then
         whiptail --yesno "¿Desea reiniciar ahora?" 20 60 2
         if [ $? -eq 0 ]; then # yes
