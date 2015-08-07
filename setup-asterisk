@@ -40,7 +40,7 @@ do_movistar_ftth() {
     echo "disallow=all" >> /etc/asterisk/sip.conf
     echo "allow=ulaw" >> /etc/asterisk/sip.conf
     echo "allow=alaw" >> /etc/asterisk/sip.conf
-    echo "context=from-movistar"" >> /etc/asterisk/sip.conf
+    echo "context=from-movistar" >> /etc/asterisk/sip.conf
     
     sed -e "s|^;register => 2345:password@sip_proxy/1234|;register => 2345:password@sip_proxy/1234\nregister => ${PHONENUMBER}@telefonica.net:${PHONENUMBER}@10.31.255.134:5070/${PHONENUMBER}|" -i /etc/asterisk/sip.conf
 
