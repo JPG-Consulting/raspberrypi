@@ -98,6 +98,31 @@ EOF
     whiptail --msgbox "Root partition has been resized.\nThe filesystem will be enlarged upon the next reboot" 20 60 2
 }
 
+disable_setup_at_boot() {
+    if [ -e /etc/profile.d/raspi-config.sh ]; then
+        rm -f /etc/profile.d/raspi-config.sh
+        sed -i /etc/inittab \
+            -e "s/^#\(.*\)#\s*RPICFG_TO_ENABLE\s*/\1/" \
+            -e "/#\s*RPICFG_TO_DISABLE/d"
+        telinit q
+    fi
+}
+
+do_finish() {
+    # Cleanup backups
+    [ -d /tmp/asterisk ] && rm -rf /tmp/asterisk
+
+    disable_setup_at_boot
+    if [ $ASK_TO_REBOOT -eq 1 ]; then
+        whiptail --yesno "¿Desea reiniciar ahora?" 20 60 2
+        if [ $? -eq 0 ]; then # yes
+            sync
+            reboot
+        fi
+    fi
+    exit 0
+}
+
 do_backups() {
     [ ! -f /etc/asterisk/sip.conf.orig ] && cp /etc/asterisk/sip.conf /etc/asterisk/sip.conf.orig
     [ ! -f /etc/asterisk/extensions.conf.orig ] && cp /etc/asterisk/extensions.conf /etc/asterisk/extensions.conf.orig
@@ -273,5 +298,4 @@ done
 
 do_movistar_ftth
 
-# Cleanup backups
-[ -d /tmp/asterisk ] && rm -rf /tmp/asterisk
+do_finish
