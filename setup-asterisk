@@ -164,6 +164,7 @@ do_movistar_ftth_comtrend() {
     # [1001]
     # type=friend                     ; Friends place calls and receive calls
     # authuser=${PHONENUMBER}
+    # defaultuser=authuser=${PHONENUMBER}
     # fromuser=${PHONENUMBER}
     # host=dynamic                    ; This peer register with us
     # dtmfmode=inband                 ; Choices are inband, rfc2833, or info
@@ -173,6 +174,8 @@ do_movistar_ftth_comtrend() {
     # allow=ulaw
     # allow=alow
     # allow=gsm
+    # regexten=${PHONENUMBER}
+    # subscribecontext=public
 
 }
 calc_wt_size
