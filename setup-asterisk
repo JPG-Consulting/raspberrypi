@@ -63,14 +63,19 @@ do_add_user() {
     local extension_email=''
     local extension_password=''
     local extension_cid_number=''
-    
+
+    # 1001 está reservado para el cliente del Comtrend VG-8050 via LAN
+    if [ $CURRENT_EXTENSION_NUM -eq 1001 ]; then
+        ((CURRENT_EXTENSION_NUM=CURRENT_EXTENSION_NUM+1))
+    fi
+
     extension_cid_number=${CURRENT_EXTENSION_NUM}
-    
+
     extension_password=$(whiptail --passwordbox "Introduzca la contraseña del usuario" 20 60 "" 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
         return 1
     fi
-    
+
     extension_fullname=$(whiptail --inputbox "Introduzca el nombre completo del usuario" 20 60 "" 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
         extension_fullname=''
@@ -154,6 +159,22 @@ do_movistar_ftth() {
     sed -e "s|^include => demo|include => outbound-movistar|" -i /etc/asterisk/extensions.conf
 }
 
+do_movistar_ftth_comtrend() {
+    # Se registra y le puedo llamar pero el no puede llamar :(
+    # [1001]
+    # type=friend                     ; Friends place calls and receive calls
+    # authuser=944807518
+    # fromuser=944807518
+    # host=dynamic                    ; This peer register with us
+    # dtmfmode=inband                 ; Choices are inband, rfc2833, or info
+    # qualify=yes
+    # insecure=port,invite
+    # disallow=all
+    # allow=ulaw
+    # allow=alow
+    # allow=gsm
+
+}
 calc_wt_size
 
 do_set_userbase
