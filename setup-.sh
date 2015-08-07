@@ -103,8 +103,8 @@ do_finish() {
     [ -d /tmp/asterisk ] && rm -rf /tmp/asterisk
 
     # Disable setup at boor
-    if [ -e /etc/profile.d/setup-asterisk ]; then
-        rm -f /etc/profile.d/setup-asterisk
+    if [ -e /etc/profile.d/setup-asterisk.sh ]; then
+        rm -f /etc/profile.d/setup-asterisk.sh
     fi
 
     if [ $ASK_TO_REBOOT -eq 1 ]; then
