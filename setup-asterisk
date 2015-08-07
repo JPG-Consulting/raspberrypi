@@ -20,6 +20,24 @@ calc_wt_size() {
     WT_MENU_HEIGHT=$(($WT_HEIGHT-7))
 }
 
+do_backups() {
+    [ ! -f /etc/asterisk/sip.conf.orig ] && cp /etc/asterisk/sip.conf /etc/asterisk/sip.conf.orig
+    [ ! -f /etc/asterisk/extensions.conf.orig ] && cp /etc/asterisk/extensions.conf /etc/asterisk/extensions.conf.orig
+    [ ! -f /etc/asterisk/users.conf.orig ] && cp /etc/asterisk/users.conf /etc/asterisk/users.conf.orig
+    
+    [ ! -d /tmp/asterisk ] && mkdir -p /tmp/asterisk
+    
+    cp /etc/asterisk/sip.conf /tmp/asterisk/sip.conf
+    cp /etc/asterisk/extensions.conf /tmp/asterisk/extensions.conf
+    cp /etc/asterisk/users.conf /temp/asterisk/users.conf
+}
+
+do_restore_backups() {
+    cp /tmp/asterisk/sip.conf /etc/asterisk/sip.conf
+    cp /tmp/asterisk/extensions.conf /etc/asterisk/extensions.conf
+    cp /temp/asterisk/users.conf /etc/asterisk/users.conf
+}
+
 do_set_userbase()
 {
     local userbase=${ASTERISK_USERS_CONF_USERBASE}
@@ -55,20 +73,24 @@ do_add_user() {
     
     extension_fullname=$(whiptail --inputbox "Introduzca el nombre completo del usuario" 20 60 "" 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
-        return 1
+        extension_fullname=''
     fi
     
     extension_email=$(whiptail --inputbox "Introduzca el correo electrónico del usuario" 20 60 "" 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
-        return 1
+        extension_email=''
     fi
     
     echo ""  >> /etc/asterisk/users.conf
     echo "[${extension_num]" >> /etc/asterisk/users.conf
     echo "host=dymanic" >> /etc/asterisk/users.conf
     echo "secret=${extension_password}" >> /etc/asterisk/users.conf
-    echo "fullname=${extension_fullname}" >> /etc/asterisk/users.conf
-    echo "email=${extension_email}" >> /etc/asterisk/users.conf
+    if [ -n "${extension_fullname}" ]; then
+        echo "fullname=${extension_fullname}" >> /etc/asterisk/users.conf
+    fi
+    if [ -n "${extension_email}" ]; then
+        echo "email=${extension_email}" >> /etc/asterisk/users.conf
+    fi
     echo "cid_number=${extension_cid_number}" >> /etc/asterisk/users.conf
     
     CONFIGURED_EXTENSIONS+=( "SIP/${CURRENT_EXTENSION_NUM}" )
@@ -146,3 +168,6 @@ while true; do
 done
 
 do_movistar_ftth
+
+# Cleanup backups
+[ -d /tmp/asterisk ] && rm -rf /tmp/asterisk
