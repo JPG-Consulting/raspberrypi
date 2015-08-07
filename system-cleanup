@@ -1,0 +1,28 @@
+#!/bin/bash
+
+sudo apt-get clean
+sudo apt-get autoclean
+sudo apt-get autoremove
+
+[ -d /var/tmp ] && rm -ir /var/tmp/*
+[ -d /var/lib/dhcp ] && rm -rf /var/lib/dhcp/*
+[ -d /var/lib/dhcpcd5 ] && rm -rf /var/lib/dhcpcd5/*
+
+# Remove logs
+find /var/log/ -type f \( ! -iname "*.gz" \) | while read filename; do
+    cat /dev/null > "$filename"
+done
+
+find /var/log/ -type f \( -iname "*.gz" \) | while read filename; do
+    rm -f "$filename"
+done
+
+# Minimise the disk
+#dd if=/dev/zero of=/EMPTY bs=1M
+#rm -f /EMPTY
+
+# Clear history
+[ -f ~/.bash_history ] && cat /dev/null > ~/.bash_history
+[ -f /home/pi/.bash_history ] && cat /dev/null > /home/pi/.bash_history
+[ -f /root/.bash_history ] && cat /dev/null > /root/.bash_history
+history -c
