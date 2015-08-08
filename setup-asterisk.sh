@@ -186,7 +186,7 @@ do_add_user() {
     fi
     
     echo ""  >> /etc/asterisk/users.conf
-    echo "[${extension_num]" >> /etc/asterisk/users.conf
+    echo "[${extension_num}]" >> /etc/asterisk/users.conf
     echo "host=dymanic" >> /etc/asterisk/users.conf
     echo "secret=${extension_password}" >> /etc/asterisk/users.conf
     if [ -n "${extension_fullname}" ]; then
