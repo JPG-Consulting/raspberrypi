@@ -67,7 +67,7 @@ EOF
     ASK_TO_REBOOT=1
 
     # now set up an init.d script
-    cat <<\EOF > /etc/init.d/resize2fs_once &&
+cat <<\EOF > /etc/init.d/resize2fs_once &&
 #!/bin/sh
 ### BEGIN INIT INFO
 # Provides:          resize2fs_once
@@ -78,7 +78,9 @@ EOF
 # Short-Description: Resize the root filesystem to fill partition
 # Description:
 ### END INIT INFO
+
 . /lib/lsb/init-functions
+
 case "$1" in
     start)
         log_daemon_msg "Starting resize2fs_once" &&
