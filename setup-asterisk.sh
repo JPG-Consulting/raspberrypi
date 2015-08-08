@@ -278,6 +278,8 @@ do_movistar_ftth() {
 #}
 
 do_chan_dongle() {
+    local sip_extensions=$( IFS=$'&'; echo "${CONFIGURED_EXTENSIONS[*]}" )
+    
     MOBILE_PHONENUMBER=$(whiptail --inputbox "Introduzca el número de teléfono móvil del pincho" 20 60 "$CURRENT_HOSTNAME" 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
         return 1
@@ -315,7 +317,8 @@ do_chan_dongle() {
 
     # All other incoming calls
     echo "exten => _X.,1,Set(CALLERID(name)=\${CALLERID(num)})" >> /etc/asterisk/extensions.conf
-    echo "exten => _X.,1,GoTo(from-trunk,\${EXTEN},1)" >> /etc/asterisk/extensions.conf
+    #echo "exten => _X.,1,GoTo(from-trunk,\${EXTEN},1)" >> /etc/asterisk/extensions.conf
+    echo "exten => _X.,n,Dial(${sip_extensions})" >> /etc/asterisk/extensions.conf
 }
 
 if [ $(id -u) -ne 0 ]; then
