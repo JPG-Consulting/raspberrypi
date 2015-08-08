@@ -310,11 +310,26 @@ do_chan_dongle() {
     echo "exten => sms,n,Hangup()" >> /etc/asterisk/extensions.conf
 
     # DISA
-    if [ -n $DONGLE_DISA_NUM ]; then
-        echo "exten => ${DONGLE_DISA_NUM},1,Answer()" >> /etc/asterisk/extensions.conf
-        echo "exten => ${DONGLE_DISA_NUM},n,DISA(${DONGLE_DISA_PIN})" >> /etc/asterisk/extensions.conf
+    whiptail --yesno "¿Desea habilitar DISA en el canal GSM?" 20 60 2 --yes-button Si --no-button No
+    if [ $? -eq 0 ]; then
+        DONGLE_DISA_PHONENUMBER=$(whiptail --inputbox "Introduzca el número de teléfono desde el que accederá a DISA" 20 60 "$CURRENT_HOSTNAME" 3>&1 1>&2 2>&3)
+        if [ $? -ne 0 ]; then
+            DONGLE_DISA_PHONENUMBER=''
+        fi
+        
+        if [ -n $DONGLE_DISA_PHONENUMBER ]; then
+            DONGLE_DISA_PIN=$(whiptail --passwordbox "Introduzca el PIN para acceder a DISA" 20 60 "$CURRENT_HOSTNAME" 3>&1 1>&2 2>&3)
+            if [ $? -ne 0 ]; then
+                DONGLE_DISA_PIN=''
+            fi
+            
+            echo "exten => ${DONGLE_DISA_PHONENUMBER},1,Answer()" >> /etc/asterisk/extensions.conf
+            echo "exten => ${DONGLE_DISA_PHONENUMBER},n,DISA(${DONGLE_DISA_PIN})" >> /etc/asterisk/extensions.conf
+        else
+            whiptail --msgbox "DISA no ha sido activado." 20 60 1
+        fi
     fi
-
+    
     # All other incoming calls
     echo "exten => _X.,1,Set(CALLERID(name)=\${CALLERID(num)})" >> /etc/asterisk/extensions.conf
     #echo "exten => _X.,1,GoTo(from-trunk,\${EXTEN},1)" >> /etc/asterisk/extensions.conf
