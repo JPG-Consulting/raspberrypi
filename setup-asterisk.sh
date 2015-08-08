@@ -278,7 +278,12 @@ do_movistar_ftth() {
 #}
 
 do_chan_dongle() {
-    sed -e "s|^exten=+1234567890|exten=${MOBILE_PHONE}|" -i /etc/asterisk/dongle.conf
+    MOBILE_PHONENUMBER=$(whiptail --inputbox "Introduzca el número de teléfono móvil del pincho" 20 60 "$CURRENT_HOSTNAME" 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+
+    sed -e "s|^exten=+1234567890|exten=${MOBILE_PHONENUMBER}|" -i /etc/asterisk/dongle.conf
     sed -e "s|^context=default|context=from-dongle|" -i /etc/asterisk/dongle.conf
 
     echo "" >> /etc/asterisk/extensions.conf
