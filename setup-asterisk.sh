@@ -275,8 +275,11 @@ do_movistar_ftth() {
     # allow=gsm
     # regexten=${PHONENUMBER}
     # subscribecontext=public
-
 #}
+
+do_chan_dongle() {
+    
+}
 
 if [ $(id -u) -ne 0 ]; then
     sudo /etc/profile.d/setup-asterisk.sh
@@ -299,5 +302,10 @@ while true; do
 done
 
 do_movistar_ftth
+
+whiptail --yesno "¿Desea activar chan_dongle?" 20 60 2 --yes-button Si --no-button No
+if [ $? -eq 0 ]; then
+    break
+fi
 
 do_finish
