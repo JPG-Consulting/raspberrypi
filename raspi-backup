@@ -340,7 +340,7 @@ function do_image_cleanup() {
     #done
 
     # Minimise the disk to allow higher compression ratio
-    dd if=/dev/zero of=${MOUNT_PATH}/EMPTY bs=1M
+    dd if=/dev/zero of=${MOUNT_PATH}/EMPTY bs=1M >& /dev/null
     rm -f ${MOUNT_PATH}/EMPTY
     
     # Clear history
