@@ -283,7 +283,7 @@ fi
 
 calc_wt_size
 
-do_expand_rootfs()
+do_expand_rootfs
 
 do_set_userbase
 
