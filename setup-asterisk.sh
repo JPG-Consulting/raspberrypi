@@ -253,7 +253,7 @@ do_movistar_ftth() {
     
     echo "" >> /etc/asterisk/extensions.conf
     echo "[from-movistar]" >> /etc/asterisk/extensions.conf
-    echo "exten => s,1,Dial(${sip_extensions})"
+    echo "exten => s,1,Dial(${sip_extensions})" >> /etc/asterisk/extensions.conf
     
     sed -e "s|^include => demo|include => outbound-movistar|" -i /etc/asterisk/extensions.conf
 }
