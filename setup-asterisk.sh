@@ -256,7 +256,7 @@ do_movistar_ftth() {
     sed -e "s|^include => demo|include => outbound-movistar|" -i /etc/asterisk/extensions.conf
 }
 
-do_movistar_ftth_comtrend() {
+#do_movistar_ftth_comtrend() {
     # Se registra y le puedo llamar pero el no puede llamar :(
     # [1001]
     # type=friend                     ; Friends place calls and receive calls
@@ -274,7 +274,13 @@ do_movistar_ftth_comtrend() {
     # regexten=${PHONENUMBER}
     # subscribecontext=public
 
-}
+#}
+
+if [ $(id -u) -ne 0 ]; then
+    sudo /etc/profile.d/setup-asterisk.sh
+    exit 0
+fi
+
 calc_wt_size
 
 do_expand_rootfs()
