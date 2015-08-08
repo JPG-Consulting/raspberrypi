@@ -278,7 +278,39 @@ do_movistar_ftth() {
 #}
 
 do_chan_dongle() {
-    
+    sed -e "s|^exten=+1234567890|exten=${MOBILE_PHONE}|" -i /etc/asterisk/dongle.conf
+    sed -e "s|^context=default|context=from-dongle|" -i /etc/asterisk/dongle.conf
+
+    echo "" >> /etc/asterisk/extensions.conf
+    echo "[from-dongle]" >> /etc/asterisk/extensions.conf
+
+    # SMS
+    echo "exten => sms,1,Verbose(Incoming SMS from \${CALLERID(num)} \${BASE64_DECODE(\${SMS_BASE64})})" >> /etc/asterisk/extensions.conf
+
+    if [ -z "$DONGLE_EMAIL_ADDRESS" ]; then
+        echo "exten => sms,n,Set(FILE($DONGLE_SMS_FILE,,,a)=\${STRFTIME(\${EPOCH},,%Y-%m-%d %H:%M:%S)} - \${DONGLENAME} - \${CALLERID(num)}: \${BASE64_DECODE(\${SMS_BASE64})})" >> /etc/asterisk/extensions.conf
+        echo "exten => sms,n,System(echo >> $DONGLE_SMS_FILE)" >> /etc/asterisk/extensions.conf
+    else
+        echo "exten => sms,n,System(echo \"To: $DONGLE_EMAIL_ADDRESS\nSubject: Incoming SMS from \${CALLERID(num)}\n\n\${STRFTIME(\${EPOCH},,%Y-%m-%d %H:%M:%S)} - \${DONGLENAME} - \${CALLERID(num)}: \" > /tmp/sms.txt)" >> /etc/asterisk/extensions.conf
+        echo "exten => sms,n,Set(FILE(/tmp/sms.txt,,,a)=\${BASE64_DECODE(\${SMS_BASE64})})" >> /etc/asterisk/extensions.conf
+        echo "exten => sms,n,System(sendmail -t < /tmp/sms.txt)" >> /etc/asterisk/extensions.conf
+    fi
+
+    if [ -n "$DONGLE_FORWARD_SMS_TO" ]; then
+        echo "exten => sms,n,DongleSendSMS(dongle0,$DONGLE_FORWARD_SMS_TO,\${BASE64_DECODE(\${SMS_BASE64})} - from \${CALLERID(num)})" >> /etc/asterisk/extensions.conf
+    fi
+
+    echo "exten => sms,n,Hangup()" >> /etc/asterisk/extensions.conf
+
+    # DISA
+    if [ -n $DONGLE_DISA_NUM ]; then
+        echo "exten => ${DONGLE_DISA_NUM},1,Answer()" >> /etc/asterisk/extensions.conf
+        echo "exten => ${DONGLE_DISA_NUM},n,DISA(${DONGLE_DISA_PIN})" >> /etc/asterisk/extensions.conf
+    fi
+
+    # All other incoming calls
+    echo "exten => _X.,1,Set(CALLERID(name)=\${CALLERID(num)})" >> /etc/asterisk/extensions.conf
+    echo "exten => _X.,1,GoTo(from-trunk,\${EXTEN},1)" >> /etc/asterisk/extensions.conf
 }
 
 if [ $(id -u) -ne 0 ]; then
@@ -305,7 +337,7 @@ do_movistar_ftth
 
 whiptail --yesno "¿Desea activar chan_dongle?" 20 60 2 --yes-button Si --no-button No
 if [ $? -eq 0 ]; then
-    break
+    do_chan_dongle
 fi
 
 do_finish
