@@ -268,11 +268,17 @@ function do_backup()
     echo "Starting the filesystem rsync to ${IMAGE_FILE}"
     echo "(This may take several minutes)..."
 
+    # Clean APT
+    sudo apt-get clean -y -qq
+    sudo apt-get autoclean -y -qq
+    sudo apt-get autoremove -y -qq
+    
     # Do not include a dhpys swapfile in the clone.  dhpys-swapfile will
     # regenerate it at boot.
     #
     if [ -f /etc/dphys-swapfile ]; then
-        SWAPFILE=`cat /etc/dphys-swapfile | grep ^CONF_SWAPFILE | cut -f 2 -d=`
+        SWAPFILE=`
+        cat /etc/dphys-swapfile | grep ^CONF_SWAPFILE | cut -f 2 -d=`
         if [ "$SWAPFILE" = "" ]; then
             SWAPFILE=/var/swap
         fi
@@ -294,6 +300,9 @@ function do_backup()
           --exclude '/tmp' \
           --exclude 'lost\+found' \
           --exclude '/etc/udev/rules.d/70-persistent-net.rules' \
+          --exclude '/var/tmp' \
+          --exclude '/var/lib/dhcp' \
+          --exclude '/var/lib/dhcpcd5' \
           --exclude "${MOUNT_PATH}" \
           --exclude "${IMAGE_FILE}" \
           / ${MOUNT_PATH}/
@@ -311,33 +320,35 @@ function do_backup()
     delete_lo
 }
 
-function do_system_cleanup() {
-    sudo apt-get clean
-    sudo apt-get autoclean
-    sudo apt-get autoremove
-
-    [ -d /var/tmp ] && rm -ir /var/tmp/*
-    [ -d /var/lib/dhcp ] && rm -rf /var/lib/dhcp/*
-    [ -d /var/lib/dhcpcd5 ] && rm -rf /var/lib/dhcpcd5/*
+function do_image_cleanup() {
+    if [ ! -f $IMAGE_FILE ]; then
+        echo "Image file $IMAGE_FILE does not exist."
+        delete_mount
+        exit 1
+    fi
+    
+    setup_lo
+    mount_image
     
     # Remove logs
-    find /var/log/ -type f \( ! -iname "*.gz" \) | while read filename; do
-        cat /dev/null > "$filename"
-    done
+    #find ${MOUNT_PATH}/var/log/ -type f \( ! -iname "*.gz" \) | while read filename; do
+    #    cat /dev/null > "$filename"
+    #done
 
-    find /var/log/ -type f \( -iname "*.gz" \) | while read filename; do
-        rm -f "$filename"
-    done
+    #find ${MOUNT_PATH}/var/log/ -type f \( -iname "*.gz" \) | while read filename; do
+    #    rm -f "$filename"
+    #done
 
-    # Minimise the disk
-    dd if=/dev/zero of=/EMPTY bs=1M
-    rm -f /EMPTY
+    # Minimise the disk to allow higher compression ratio
+    dd if=/dev/zero of=${MOUNT_PATH}/EMPTY bs=1M
+    rm -f ${MOUNT_PATH}/EMPTY
     
     # Clear history
-    [ -f ~/.bash_history ] && cat /dev/null > ~/.bash_history
-    [ -f /home/pi/.bash_history ] && cat /dev/null > /home/pi/.bash_history
-    [ -f /root/.bash_history ] && cat /dev/null > /root/.bash_history
-    history -c
+    [ -f ${MOUNT_PATH}/root/.bash_history ] && cat /dev/null > ${MOUNT_PATH}/root/.bash_history
+    [ -f ${MOUNT_PATH}/home/pi/.bash_history ] && cat /dev/null > ${MOUNT_PATH}/home/pi/.bash_history
+    
+    unmount_image
+    delete_lo
 }
 
 if [[ $EUID -ne 0 ]]; then
@@ -365,9 +376,9 @@ if [ -f ${IMAGE_FILE} ]; then
     rm -f ${IMAGE_FILE}
 fi
 
-do_system_cleanup
 create_image
 do_backup
+do_image_cleanup
 
 delete_mount
 
