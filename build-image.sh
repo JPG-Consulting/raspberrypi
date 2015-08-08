@@ -5,7 +5,6 @@ DISTRIB_ID='raspbian'
 DISTRIB_CODENAME='wheezy'
 MOUNT_PATH=/backup
 RSYNC_OPTIONS='--force -rltWDEgopt'
-INCLUDE_GZ_LOGS=0
 
 function delete_mount()
 {
@@ -26,7 +25,7 @@ function delete_lo()
         delete_mount
         exit 1
     fi
-    
+
     partx -d ${IMAGE_LOOP}p2
     if [ $? -ne 0 ]; then
         echo "Failed to delete loop device root partition."
@@ -34,7 +33,7 @@ function delete_lo()
         delete_mount
         exit 1
     fi
-    
+
     losetup -d ${IMAGE_LOOP}
     if [ $? -ne 0 ]; then
         echo "Failed to delete loop device."
@@ -51,14 +50,14 @@ function setup_lo()
         delete_mount
         exit 1
     fi
-    
+
     losetup -f $IMAGE_FILE
     if [ $? -ne 0 ]; then
         echo "Failed to create loop device."
         delete_mount
         exit 1
     fi
-    
+
     partx -a ${IMAGE_LOOP}
     if [ $? -ne 0 ]; then
         echo "Failed to create loop device for partitions."
@@ -72,7 +71,7 @@ function mount_image()
     if [ ! -d ${MOUNT_PATH} ]; then
         mkdir -p ${MOUNT_PATH}
     fi
-    
+
     mount ${IMAGE_LOOP}p2 ${MOUNT_PATH}
     if [ $? -ne 0 ]; then
         echo "Error mounting root partition"
@@ -80,11 +79,11 @@ function mount_image()
         delete_mount
         exit 1
     fi
-    
+
     if [ ! -d ${MOUNT_PATH}/boot ]; then
         mkdir -p ${MOUNT_PATH}/boot
     fi
-    
+
     mount ${IMAGE_LOOP}p1 ${MOUNT_PATH}/boot
     if [ $? -ne 0 ]; then
         echo "Error mounting boot partition"
@@ -106,7 +105,7 @@ function unmount_image()
         delete_mount
         exit 1
     fi
-    
+
     umount ${MOUNT_PATH}
     if [ $? -ne 0 ]; then
         echo "Error unmounting root partition."
@@ -125,26 +124,26 @@ function create_image()
         delete_mount
         exit 1
     fi
-    
+
     local bootfs_end=$(parted /dev/mmcblk0 -ms unit s p | grep "^1" | cut -f 3 -d:)
     if [ -z ${bootfs_end} ]; then
         echo "Unable to get boot partition end offset."
         exit 1
     fi
-    
+
     local rootfs_start=$(parted /dev/mmcblk0 -ms unit s p | grep "^2" | cut -f 2 -d:)
     if [ -z ${rootfs_start} ]; then
         echo "Unable to get root filesystem start offset."
         exit 1
     fi
-    
+
     # Get sizes in MB
     local bootfs_size=`df -B MB | grep '/dev/mmcblk0p1' | awk '{print $2}' | awk -F "MB" '{print $1}'`
     if [ -z ${bootfs_size} ]; then
         echo "Unable to get boot filesystem size."
         exit 1
     fi
-    
+
     local rootfs_size=`df -B MB | grep 'rootfs' | awk '{print $3}' | awk -F "MB" '{print $1}'`
     if [ -z ${rootfs_size} ]; then
         echo "Unable to get root filesystem size."
@@ -160,9 +159,9 @@ function create_image()
         echo "Freespace has been set to 8Mb"
         $IMAGE_FREESPACE=8
     fi
-    
+
     local image_size=$(expr ${bootfs_size} + ${rootfs_size} + ${IMAGE_FREESPACE} )    
-    
+
     echo "Creating image file..."
     dd if=/dev/zero of=${IMAGE_FILE} bs=1M count=${image_size} >& /dev/null
     if [ $? -ne 0 ]; then
@@ -176,21 +175,21 @@ function create_image()
         echo "Failed to create disk label."
         exit 1
     fi
-    
+
     parted ${IMAGE_FILE} --script -- mkpart primary fat32 ${bootfs_start} ${bootfs_end} >& /dev/null
     if [ $? -ne 0 ]; then
         echo "Failed to create boot partition."
         exit 1
     fi
-    
+
     parted ${IMAGE_FILE} --script -- mkpart primary ext4 ${rootfs_start} -1 >& /dev/null
     if [ $? -ne 0 ]; then
         echo "Failed to create root partition."
         exit 1
     fi
-    
+
     setup_lo
-    
+
     echo "Formatting boot partition."
     mkfs.vfat -I ${IMAGE_LOOP}p1 >& /dev/null
     if [ $? -ne 0 ]; then
@@ -199,7 +198,7 @@ function create_image()
         delete_mount
         exit 1
     fi
-    
+
     echo "Formattinng root partition."
     mkfs.ext4 ${IMAGE_LOOP}p2 >& /dev/null
     if [ $? -ne 0 ]; then
@@ -208,9 +207,9 @@ function create_image()
         delete_mount
         exit 1
     fi
-    
+
     mount_image
-    
+
     mkdir ${MOUNT_PATH}/dev ${MOUNT_PATH}/media ${MOUNT_PATH}/mnt ${MOUNT_PATH}/proc ${MOUNT_PATH}/run ${MOUNT_PATH}/sys ${MOUNT_PATH}/tmp
     if [ $? -ne 0 ]; then
         echo "Error creating directories."
@@ -219,9 +218,9 @@ function create_image()
         delete_mount
         exit 1
     fi
-    
+
     chmod a+rwxt ${MOUNT_PATH}/tmp
-    
+
     unmount_image
     delete_lo
 }
@@ -232,7 +231,7 @@ function enable_raspi_config_at_boot()
         echo "/etc/profile.d/raspi-config.sh exists, so assuming config at boot enabled"
         return 0
     fi
-    
+
     echo "#!/bin/sh" > ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
     echo "# Part of raspi-config http://github.com/asb/raspi-config" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
     echo "#" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
@@ -251,7 +250,7 @@ function enable_raspi_config_at_boot()
     echo "  raspi-config" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
     echo "  exec login -f pi" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
     echo "fi" >> ${MOUNT_PATH}/etc/profile.d/raspi-config.sh
-    
+
     telinit q
 }
 
@@ -262,63 +261,51 @@ function do_backup()
         delete_mount
         exit 1
     fi
-    
-    # Minor cleanup
-    sudo apt-get clean
-    sudo apt-get autoclean
-    sudo apt-get autoremove
-    
-    # Clear history
-    echo "Cleaning bash history"
-    [ -f ~/.bash_history ] && cat /dev/null > ~/.bash_history
-    [ -f /home/pi/.bash_history ] && cat /dev/null > /home/pi/.bash_history
-    [ -f /root/.bash_history ] && cat /dev/null > /root/.bash_history
-    history -c
-    
+
     setup_lo
     mount_image
-    
+
     echo "Starting the filesystem rsync to ${IMAGE_FILE}"
     echo "(This may take several minutes)..."
+
+    # Clean APT
+    sudo apt-get clean -y -qq
+    sudo apt-get autoclean -y -qq
+    sudo apt-get autoremove -y -qq
 
     # Do not include a dhpys swapfile in the clone.  dhpys-swapfile will
     # regenerate it at boot.
     #
     if [ -f /etc/dphys-swapfile ]; then
-        SWAPFILE=`cat /etc/dphys-swapfile | grep ^CONF_SWAPFILE | cut -f 2 -d=`
+        SWAPFILE=`
+        cat /etc/dphys-swapfile | grep ^CONF_SWAPFILE | cut -f 2 -d=`
         if [ "$SWAPFILE" = "" ]; then
             SWAPFILE=/var/swap
         fi
         EXCLUDE_SWAPFILE="--exclude $SWAPFILE"
     fi
-    
-    # Do not include tar.gz log files in the clone.
-    if [ $INCLUDE_GZ_LOGS -ne 0 ]; then
-        EXCLUDE_GZ_LOGS="--exclude '/var/log/*.gz'"
-    fi
-    
+
     # Exclude fuse mountpoint .gvfs, various other mount points, and tmpfs
     # file systems from the rsync.
     sync
     rsync ${RSYNC_OPTIONS} --delete \
-        $EXCLUDE_SWAPFILE \
-        $EXCLUDE_GZ_LOGS \
-        --exclude '.gvfs' \
-        --exclude '/dev' \
-        --exclude '/media' \
-        --exclude '/mnt' \
-        --exclude '/proc' \
-        --exclude '/run' \
-        --exclude '/sys' \
-        --exclude '/tmp' \
-        --exclude '/var/tmp' \
-        --exclude '/var/lib/dhcp' \
-        --exclude '/var/lib/dhcpcd5' \
-        --exclude 'lost\+found' \
-        --exclude '/etc/udev/rules.d/70-persistent-net.rules' \
-        --exclude "${MOUNT_PATH}" \
-        --exclude "${IMAGE_FILE}" \
-        / ${MOUNT_PATH}/
+          $EXCLUDE_SWAPFILE \
+          --exclude '.gvfs' \
+          --exclude '/dev' \
+          --exclude '/media' \
+          --exclude '/mnt' \
+          --exclude '/proc' \
+          --exclude '/run' \
+          --exclude '/sys' \
+          --exclude '/tmp' \
+          --exclude 'lost\+found' \
+          --exclude '/etc/udev/rules.d/70-persistent-net.rules' \
+          --exclude '/var/tmp' \
+          --exclude '/var/lib/dhcp' \
+          --exclude '/var/lib/dhcpcd5' \
+          --exclude "${MOUNT_PATH}" \
+          --exclude "${IMAGE_FILE}" \
+          / ${MOUNT_PATH}/
     if [ $? -ne 0 ]; then
         echo "Error running backup"
         unmount_image
@@ -326,9 +313,9 @@ function do_backup()
         delete_mount
         exit 1
     fi
-    
+
     enable_raspi_config_at_boot
-    
+
     unmount_image
     delete_lo
 }
@@ -339,21 +326,25 @@ function do_image_cleanup() {
         delete_mount
         exit 1
     fi
-    
+
     setup_lo
     mount_image
-    
+
     # Remove logs
-    find ${MOUNT_PATH}/var/log/ -type f \( ! -iname "*.gz" \) | while read filename; do
-        cat /dev/null > "$filename"
-    done
+    #find ${MOUNT_PATH}/var/log/ -type f \( ! -iname "*.gz" \) | while read filename; do
+    #    cat /dev/null > "$filename"
+    #done
 
-    find ${MOUNT_PATH}/var/log/ -type f \( -iname "*.gz" \) | while read filename; do
-        rm -f "$filename"
-    done
+    #find ${MOUNT_PATH}/var/log/ -type f \( -iname "*.gz" \) | while read filename; do
+    #    rm -f "$filename"
+    #done
 
-    # Minimise the disk
-    dd if=/dev/zero of=${MOUNT_PATH}/EMPTY bs=1M
+    # Clear history
+    [ -f ${MOUNT_PATH}/root/.bash_history ] && cat /dev/null > ${MOUNT_PATH}/root/.bash_history
+    [ -f ${MOUNT_PATH}/home/pi/.bash_history ] && cat /dev/null > ${MOUNT_PATH}/home/pi/.bash_history
+
+    # Minimize the disk to allow higher compression ratio
+    dd if=/dev/zero of=${MOUNT_PATH}/EMPTY bs=1M >& /dev/null
     rm -f ${MOUNT_PATH}/EMPTY
 
     unmount_image
